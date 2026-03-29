@@ -47,8 +47,8 @@ public abstract class FluidTankBlockMixin extends Block implements IBE<BasinBloc
             if (maxSize == 1) {
                 expFluid.drop(serverLevel, VecHelper.getCenterOf(pos), fluidStackBackup.getAmount());
             } else {
-                var total = maxSize * (FluidTankBlockEntity.getCapacityMultiplier() - 1);
-                var leftover = fluidStackBackup.getAmount() - total;
+                int newCapacity = (maxSize - 1) * FluidTankBlockEntity.getCapacityMultiplier();
+                int leftover = fluidStackBackup.getAmount() - newCapacity;
                 if(leftover > 0) {
                     expFluid.drop(serverLevel, VecHelper.getCenterOf(pos), leftover);
                 }

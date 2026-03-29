@@ -47,6 +47,11 @@ public class GrindingRecipe extends ProcessingRecipe<RecipeWrapper> implements I
     }
 
     @Override
+    protected int getMaxFluidInputCount() {
+        return 1;
+    }
+
+    @Override
     protected boolean canSpecifyDuration() {
         return true;
     }

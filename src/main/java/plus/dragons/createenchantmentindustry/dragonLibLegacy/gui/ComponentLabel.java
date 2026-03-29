@@ -82,6 +82,8 @@ public class ComponentLabel extends Label {
             }
         }
         //Compute result component
+        if (result.isEmpty())
+            return Component.literal("...");
         if(trimFront) {
             var trim = Component.literal("...").setStyle(result.get(0).getStyle());
             result.forEach(trim::append);

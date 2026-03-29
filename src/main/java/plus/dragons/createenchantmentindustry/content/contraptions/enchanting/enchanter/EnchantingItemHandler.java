@@ -6,6 +6,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
+import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.EnchantingTemplateItem;
 import javax.annotation.Nonnull;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -41,7 +42,18 @@ public class EnchantingItemHandler implements IItemHandler {
 
         ItemStack returned = ItemStack.EMPTY;
 
-        if (stack.getCount() > 1 && Enchanting.getValidEnchantment(stack, be.targetItem, be.hyper()) != null) {
+        boolean canProcess = false;
+        if (be.enchantingBehaviour != null && be.enchantingBehaviour.canProcess(stack, be.targetItem, be.hyper()))
+            canProcess = true;
+        else if (Enchanting.getValidEnchantment(stack, be.targetItem, be.hyper()) != null)
+            canProcess = true;
+        else if (stack.getItem() instanceof EnchantingTemplateItem)
+            canProcess = true;
+
+        if (!canProcess)
+            return stack;
+
+        if (stack.getCount() > 1) {
             returned = ItemHandlerHelper.copyStackWithSize(stack, stack.getCount() - 1);
             stack = ItemHandlerHelper.copyStackWithSize(stack, 1);
         }
