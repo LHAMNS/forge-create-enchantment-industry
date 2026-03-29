@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import javax.annotation.Nonnull;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 
 import java.util.ArrayList;
@@ -52,7 +53,8 @@ public class FurnaceExpExtractor implements IFluidHandler{
 
     @Override
     public boolean isFluidValid(int tank, @Nonnull FluidStack stack) {
-        return stack.getFluid().isSame(CeiFluids.EXPERIENCE.get());
+        // Furnace only outputs base EXPERIENCE, so only that fluid is valid here
+        return stack.getFluid().isSame(CeiFluids.EXPERIENCE.get()) || CeiDataMaps.isXpFluid(stack);
     }
 
     @Override

@@ -33,6 +33,7 @@ import javax.annotation.Nonnull;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.BlazeEnchanterBlock;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.FilteringFluidTankBehaviour;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.entry.CeiTags;
 import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
@@ -288,7 +289,8 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
             // Drop experience fluid as orbs
             var tank = internalTank.getPrimaryHandler();
             var fluidStack = tank.getFluid();
-            if (fluidStack.getFluid() instanceof ExperienceFluid expFluid) {
+            ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(fluidStack.getFluid());
+            if (expFluid != null) {
                 expFluid.drop(serverLevel, VecHelper.getCenterOf(pos), fluidStack.getAmount());
             }
         }

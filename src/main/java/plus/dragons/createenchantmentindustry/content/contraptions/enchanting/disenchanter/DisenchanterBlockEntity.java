@@ -36,6 +36,7 @@ import net.minecraftforge.items.ItemHandlerHelper;
 import javax.annotation.Nonnull;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.Enchanting;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.foundation.advancement.CeiAdvancements;
 import plus.dragons.createenchantmentindustry.foundation.advancement.CeiTriggers;
@@ -397,7 +398,8 @@ public class DisenchanterBlockEntity extends SmartBlockEntity implements IHaveGo
                 Containers.dropItemStack(level, getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ(), heldItemStack);
             var tank = getInternalTank().getPrimaryHandler();
             var fluidStack = tank.getFluid();
-            if(fluidStack.getFluid() instanceof ExperienceFluid expFluid) {
+            ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(fluidStack.getFluid());
+            if(expFluid != null) {
                 expFluid.drop(serverLevel, VecHelper.getCenterOf(getBlockPos()), fluidStack.getAmount());
             }
         }

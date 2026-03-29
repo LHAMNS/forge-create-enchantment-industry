@@ -78,6 +78,7 @@ public class EnchantmentIndustry {
     @SubscribeEvent
     public void setup(final FMLCommonSetupEvent event) {
         event.enqueueWork(() -> {
+            CeiDataMaps.register();
             CeiAdvancements.register();
             CeiPackets.registerPackets();
             CeiFluids.registerLavaReaction();

@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.templates.FluidTank;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.entry.CeiMountedStorageTypes;
 
@@ -69,7 +70,8 @@ public class ExperienceLanternMountedStorage extends WrapperMountedFluidStorage<
 
         @Override
         public boolean isFluidValid(FluidStack stack) {
-            return stack.getFluid().isSame(CeiFluids.EXPERIENCE.get());
+            // Lantern only stores base experience fluid
+            return stack.getFluid().isSame(CeiFluids.EXPERIENCE.get()) || CeiDataMaps.isXpFluid(stack);
         }
 
         @Override

@@ -33,6 +33,7 @@ import net.minecraftforge.fluids.FluidStack;
 import javax.annotation.Nonnull;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.FilteringFluidTankBehaviour;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiTags;
 import plus.dragons.createenchantmentindustry.foundation.advancement.CeiAdvancements;
 import plus.dragons.createenchantmentindustry.foundation.advancement.CeiTriggers;
@@ -224,7 +225,8 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             if(heldItemStack != null)
                 Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), heldItemStack);
             var fluidStack = tank.getPrimaryHandler().getFluid();
-            if(fluidStack.getFluid() instanceof ExperienceFluid expFluid) {
+            ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(fluidStack.getFluid());
+            if(expFluid != null) {
                 expFluid.drop(serverLevel, VecHelper.getCenterOf(pos), fluidStack.getAmount());
             }
         }

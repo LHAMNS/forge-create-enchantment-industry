@@ -2,12 +2,12 @@ package plus.dragons.createenchantmentindustry.content.contraptions.fluids.exper
 
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.fluids.FluidStack;
-import plus.dragons.createenchantmentindustry.entry.CeiFluids;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 
 /**
  * Utility methods for experience-fluid conversions.
- * Adapted from the 1.21.1/6.0.0-dev upstream ExperienceHelper,
- * simplified for 1.20.1 Forge where DataMaps are not available.
+ * Adapted from the 1.21.1/6.0.0-dev upstream ExperienceHelper.
+ * Uses {@link CeiDataMaps} for fluid-to-XP lookups instead of hardcoded checks.
  */
 public class ExperienceHelper {
 
@@ -41,17 +41,19 @@ public class ExperienceHelper {
 
     /**
      * Converts a fluid stack to experience points.
-     * For the base EXPERIENCE fluid, 1 mB = 1 XP.
-     * For HYPER_EXPERIENCE, uses the fluid's xpRatio.
+     * Uses {@link CeiDataMaps} to look up the XP-per-mB ratio for any registered XP fluid.
+     * Falls back to ExperienceFluid.getXpRatio() for backward compatibility.
      */
     public static int getExperienceFromFluid(FluidStack fluid) {
         if (fluid.isEmpty()) return 0;
+        // Primary path: check the data map registry
+        int xpPerMb = CeiDataMaps.getXpPerMb(fluid.getFluid());
+        if (xpPerMb > 0) {
+            return fluid.getAmount() * xpPerMb;
+        }
+        // Fallback for ExperienceFluid subclasses not yet registered in the data map
         if (fluid.getFluid() instanceof ExperienceFluid expFluid) {
             return fluid.getAmount() * expFluid.getXpRatio();
-        }
-        // Fallback: 1 mB = 1 XP for recognized experience fluids
-        if (fluid.getFluid().isSame(CeiFluids.EXPERIENCE.get())) {
-            return fluid.getAmount();
         }
         return 0;
     }

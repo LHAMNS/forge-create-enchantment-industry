@@ -19,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 
 @Mixin(FluidTankBlock.class)
 public abstract class FluidTankBlockMixin extends Block implements IBE<BasinBlockEntity>, IWrenchable {
@@ -39,7 +40,8 @@ public abstract class FluidTankBlockMixin extends Block implements IBE<BasinBloc
         var fluidStack = controllerBE.getFluid(0);
         var fluidStackBackup = fluidStack.copy();
         var maxSize = controllerBE.getTotalTankSize();
-        if (fluidStack.getFluid() instanceof ExperienceFluid expFluid) {
+        ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(fluidStack.getFluid());
+        if (expFluid != null) {
             level.removeBlockEntity(pos);
             ConnectivityHandler.splitMulti(tankBE);
             if (maxSize == 1) {

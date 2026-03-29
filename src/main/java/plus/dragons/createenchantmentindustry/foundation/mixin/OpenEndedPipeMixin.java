@@ -19,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.foundation.advancement.CeiAdvancements;
 
@@ -41,7 +42,7 @@ public class OpenEndedPipeMixin {
 
     @Inject(method = "provideFluidToSpace", at = @At("HEAD"), cancellable = true, remap = false)
     private void inject(FluidStack fluid, boolean simulate, CallbackInfoReturnable<Boolean> cir){
-        if(fluid.getFluid().isSame(CeiFluids.EXPERIENCE.get()) || fluid.getFluid().isSame(CeiFluids.HYPER_EXPERIENCE.get())){
+        if(CeiDataMaps.isXpFluid(fluid)){
             if (world != null && world.isLoaded(this.outputPos) && !simulate) {
                 if (world instanceof PonderLevel){
                     var speed = new Vec3(outputPos.getX() - pos.getX() + Math.random() * 0.1,

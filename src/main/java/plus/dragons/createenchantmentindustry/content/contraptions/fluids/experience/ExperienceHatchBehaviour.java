@@ -15,6 +15,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraftforge.fluids.FluidStack;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 
 import java.util.List;
@@ -120,9 +121,8 @@ public class ExperienceHatchBehaviour extends FilteringBehaviour {
         FilterItemStack filterStack = FilterItemStack.of(stack.copy());
         if (!filterStack.isEmpty()) {
             FluidStack fluid = filterStack.fluid(getWorld());
-            // Only allow experience-type fluids
-            if (!fluid.getFluid().isSame(CeiFluids.EXPERIENCE.get())
-                    && !fluid.getFluid().isSame(CeiFluids.HYPER_EXPERIENCE.get()))
+            // Only allow registered XP fluids (EXPERIENCE, HYPER_EXPERIENCE, or mod-added)
+            if (!CeiDataMaps.isXpFluid(fluid.getFluid()))
                 return false;
         }
         this.filter = filterStack;

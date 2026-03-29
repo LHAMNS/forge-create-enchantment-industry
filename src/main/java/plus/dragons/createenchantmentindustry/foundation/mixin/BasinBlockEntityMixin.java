@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 
 @Mixin(value = BasinBlockEntity.class)
 public abstract class BasinBlockEntityMixin extends SmartBlockEntity implements IHaveGoggleInformation {
@@ -34,7 +35,8 @@ public abstract class BasinBlockEntityMixin extends SmartBlockEntity implements 
             return;
         for (var tank : tanks) {
             var fluidStack = tank.getPrimaryHandler().getFluid();
-            if(fluidStack.getFluid() instanceof ExperienceFluid expFluid) {
+            ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(fluidStack.getFluid());
+            if(expFluid != null) {
                 expFluid.drop(serverLevel, VecHelper.getCenterOf(getBlockPos()), fluidStack.getAmount());
             }
         }
