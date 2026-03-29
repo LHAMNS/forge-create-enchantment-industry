@@ -1,0 +1,23 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "c": {
+      "item": "create:copper_casing"
+    },
+    "e": {
+      "item": "create:experience_block"
+    },
+    "i": {
+      "tag": "forge:plates/iron"
+    }
+  },
+  "pattern": [
+    "i",
+    "e",
+    "c"
+  ],
+  "result": {
+    "item": "create_enchantment_industry:experience_hatch"
+  }
+}
