@@ -49,15 +49,15 @@ public class DeployerExtension {
         if (CeiConfigs.SERVER.deployerMendItem.get()) {
             ItemStack heldItem = deployer.getMainHandItem();
             if (MendingByDeployer.canItemBeMended(heldItem)) {
-                ItemStack mended = MendingByDeployer.mendItem(total, heldItem);
+                MendingByDeployer.mendItem(total, heldItem);
                 consumed = total - MendingByDeployer.getNewXp(total, heldItem);
-                // The item is already modified in place by mendItem
             }
         }
-        int nuggets = (event.getAmount() - consumed) / 3;
+        int remaining = Math.max(0, event.getAmount() - consumed);
+        int nuggets = remaining / 3;
         if (nuggets > 0) {
             deployer.getInventory().placeItemBackInInventory(AllItems.EXP_NUGGET.asStack(nuggets));
         }
-        event.setAmount(total - consumed - nuggets * 3);
+        event.setAmount(Math.max(0, total - consumed - nuggets * 3));
     }
 }

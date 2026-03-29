@@ -58,12 +58,14 @@ public class ExperienceHatchBehaviour extends FilteringBehaviour {
 
     @Override
     public void write(CompoundTag nbt, boolean clientPacket) {
+        super.write(nbt, clientPacket);
         nbt.put("Filter", filter.serializeNBT());
         nbt.putInt("Scroll", count);
     }
 
     @Override
     public void read(CompoundTag nbt, boolean clientPacket) {
+        super.read(nbt, clientPacket);
         filter = FilterItemStack.of(nbt.getCompound("Filter"));
         count = nbt.getInt("Scroll");
     }

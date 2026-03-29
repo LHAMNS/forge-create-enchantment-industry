@@ -2,7 +2,6 @@ package plus.dragons.createenchantmentindustry.foundation.mixin.dragonLibLegacy;
 
 import com.simibubi.create.foundation.advancement.CreateAdvancement;
 import net.minecraft.world.entity.player.Player;
-import org.antlr.v4.runtime.misc.NotNull;
 import org.spongepowered.asm.mixin.Implements;
 import org.spongepowered.asm.mixin.Interface;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,16 +12,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import plus.dragons.createenchantmentindustry.dragonLibLegacy.advancement.AdvancementHolder;
 import plus.dragons.createenchantmentindustry.dragonLibLegacy.advancement.CreateAdvancementAccess;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 @Mixin(value = CreateAdvancement.class, remap = false)
 @Implements(@Interface(iface = CreateAdvancementAccess.class, prefix = "createDragonLib$", remap = Interface.Remap.NONE))
 public class CreateAdvancementMixin {
-    
+
     @Nullable
     private AdvancementHolder createDragonLib$advancement = null;
-    
-    public void createDragonLib$fromAdvancementHolder(@NotNull AdvancementHolder advancement) {
+
+    public void createDragonLib$fromAdvancementHolder(@Nonnull AdvancementHolder advancement) {
         this.createDragonLib$advancement = advancement;
     }
     

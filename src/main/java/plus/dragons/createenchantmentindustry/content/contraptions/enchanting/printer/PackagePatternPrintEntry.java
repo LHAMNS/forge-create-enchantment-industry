@@ -1,7 +1,6 @@
 package plus.dragons.createenchantmentindustry.content.contraptions.enchanting.printer;
 
 import com.simibubi.create.content.logistics.box.PackageItem;
-import com.simibubi.create.content.logistics.box.PackageStyles;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -44,8 +43,8 @@ public class PackagePatternPrintEntry implements PrintEntry {
     public boolean valid(ItemStack target, ItemStack tested) {
         if (!(tested.getItem() instanceof PackageItem))
             return false;
-        // Don't print same pattern onto itself
-        return !tested.is(target.getItem());
+        // Allow printing if the packages differ in visual style (item type or NBT)
+        return !ItemStack.isSameItemSameTags(target, tested);
     }
 
     @Override

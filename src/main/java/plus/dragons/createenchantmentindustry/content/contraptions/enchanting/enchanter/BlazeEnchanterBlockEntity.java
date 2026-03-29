@@ -45,7 +45,7 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
-import org.antlr.v4.runtime.misc.NotNull;
+import javax.annotation.Nonnull;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.behaviour.EnchantingBehaviour;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.behaviour.TemplateEnchantingBehaviour;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.FilteringFluidTankBehaviour;
@@ -371,7 +371,9 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
             if (!enchantingBehaviour.canProcess(heldItem.stack, targetItem, hyper))
                 return false;
 
-            int cost = enchantingBehaviour.getExperienceCost(targetItem, hyper);
+            int cost = (int) (enchantingBehaviour.getExperienceCost(targetItem, hyper) *
+                    (hyper ? CeiConfigs.SERVER.hyperEnchantByBlazeEnchanterCostCoefficient.get() :
+                            CeiConfigs.SERVER.enchantByBlazeEnchanterCostCoefficient.get()));
             FluidStack exp = new FluidStack(hyper
                     ? CeiFluids.HYPER_EXPERIENCE.get().getSource()
                     : CeiFluids.EXPERIENCE.get().getSource(), cost);
@@ -494,7 +496,15 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         if (!getHeldItemStack().isEmpty())
             return inserted;
 
-        if (inserted.getCount() > 1 && Enchanting.getValidEnchantment(inserted, targetItem, hyper()) != null) {
+        // Check if item can be processed - support both template mode and guide mode
+        boolean canProcess;
+        if (!templateItem.isEmpty()) {
+            canProcess = enchantingBehaviour.canProcess(inserted, targetItem, hyper());
+        } else {
+            canProcess = Enchanting.getValidEnchantment(inserted, targetItem, hyper()) != null;
+        }
+
+        if (inserted.getCount() > 1 && canProcess) {
             returned = ItemHandlerHelper.copyStackWithSize(inserted, inserted.getCount() - 1);
             inserted = ItemHandlerHelper.copyStackWithSize(inserted, 1);
         }
@@ -610,7 +620,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     }
 
     @Override
-    @NotNull
+    @Nonnull
     public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side) {
         if (side != null && side.getAxis()
                 .isHorizontal() && isItemHandlerCap(capability))

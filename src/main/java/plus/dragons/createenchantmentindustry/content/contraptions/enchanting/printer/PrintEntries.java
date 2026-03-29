@@ -19,30 +19,30 @@ import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.en
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static plus.dragons.createenchantmentindustry.EnchantmentIndustry.LANG;
 
 public class PrintEntries {
-    public static Map<ResourceLocation,PrintEntry> ENTRIES = new HashMap<>();
+    public static Map<ResourceLocation,PrintEntry> ENTRIES = new LinkedHashMap<>();
 
     static{
         var e1 = new EnchantedBook();
         var e2 = new WrittenBook();
+        var e7 = new CustomNamePrintEntry();
         var e3 = new NameTag();
         var e4 = new Schedule();
         var e5 = new ClipBoard();
         var e6 = new BannerPatternPrintEntry();
-        var e7 = new CustomNamePrintEntry();
         ENTRIES.put(e1.id(),e1);
         ENTRIES.put(e2.id(),e2);
+        ENTRIES.put(e7.id(),e7);
         ENTRIES.put(e3.id(),e3);
         ENTRIES.put(e4.id(),e4);
         ENTRIES.put(e5.id(),e5);
         ENTRIES.put(e6.id(),e6);
-        ENTRIES.put(e7.id(),e7);
 
         // Register package-related print entries if Create's Package system is available
         try {
@@ -236,7 +236,10 @@ public class PrintEntries {
 
         @Override
         public boolean match(ItemStack toPrint) {
-            return toPrint.is(Items.NAME_TAG);
+            if (!toPrint.is(Items.NAME_TAG))
+                return false;
+            // Don't match name tags with custom names - those are handled by CustomNamePrintEntry
+            return !toPrint.hasCustomHoverName();
         }
 
         @Override

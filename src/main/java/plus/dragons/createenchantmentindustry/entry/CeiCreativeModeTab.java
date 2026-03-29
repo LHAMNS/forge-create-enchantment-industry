@@ -28,8 +28,13 @@ public class CeiCreativeModeTab {
                     .displayItems((params, output) -> {
                         output.accept(CeiBlocks.DISENCHANTER);
                         output.accept(CeiBlocks.PRINTER);
+                        output.accept(CeiBlocks.MECHANICAL_GRINDSTONE);
+                        output.accept(CeiBlocks.EXPERIENCE_HATCH);
+                        output.accept(CeiBlocks.EXPERIENCE_LANTERN);
                         output.accept(CeiBlocks.SUPER_EXPERIENCE_BLOCK);
                         output.accept(CeiItems.ENCHANTING_GUIDE);
+                        output.accept(CeiItems.ENCHANTING_TEMPLATE);
+                        output.accept(CeiItems.SUPER_ENCHANTING_TEMPLATE);
                         output.accept(CeiItems.EXPERIENCE_ROTOR);
                         output.accept(CeiItems.SUPER_EXPERIENCE_NUGGET);
                         output.accept(CeiFluids.INK.get().getBucket());

@@ -52,6 +52,7 @@ public class ExperienceLanternBlockEntity extends SmartBlockEntity implements IH
     @Override
     public void tick() {
         super.tick();
+        if (level == null) return;
         if (!level.isClientSide && level.getGameTime() % 10 == 0) {
             drainExp();
         }

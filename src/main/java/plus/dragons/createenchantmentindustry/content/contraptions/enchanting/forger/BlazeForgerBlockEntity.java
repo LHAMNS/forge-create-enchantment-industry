@@ -29,7 +29,7 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import org.antlr.v4.runtime.misc.NotNull;
+import javax.annotation.Nonnull;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.BlazeEnchanterBlock;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.FilteringFluidTankBehaviour;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
@@ -300,7 +300,7 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
     }
 
     @Override
-    @NotNull
+    @Nonnull
     public <T> LazyOptional<T> getCapability(Capability<T> capability, @Nullable Direction side) {
         if ((side == Direction.DOWN || side == null) && isFluidHandlerCap(capability))
             return internalTank.getCapability().cast();
