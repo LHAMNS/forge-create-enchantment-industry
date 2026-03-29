@@ -351,7 +351,8 @@ public class BlazeForgerInventory extends ItemStackHandler {
         // Clamp level in non-hyper mode
         if (!forger.hyper()) {
             int maxLevel = EnchantmentLevelUtil.getMaxLevel(enchantment);
-            int extension = CeiConfigs.SERVER.maxHyperEnchantingLevelExtension.get();
+            int extension = CeiDataMaps.getEffectiveSuperEnchantingLevelExtension(
+                    enchantment, CeiConfigs.SERVER.maxHyperEnchantingLevelExtension.get());
             level = Math.min(level, maxLevel + extension);
         }
 
@@ -362,7 +363,8 @@ public class BlazeForgerInventory extends ItemStackHandler {
         stacks.set(5, blankTemplate);
 
         // Calculate cost based on enchantment rarity and level
-        double multiplier = CeiDataMaps.getSplittingCostMultiplier();
+        // Use per-enchantment multiplier if available, otherwise global
+        double multiplier = CeiDataMaps.getSplittingCostMultiplier(enchantment);
         int anvilCost = enchantment.getRarity().ordinal() + 1;
         cost += (int) (Math.max(1, anvilCost * 2) * level * multiplier);
 
@@ -451,7 +453,9 @@ public class BlazeForgerInventory extends ItemStackHandler {
             if (applicable) {
                 applied = true;
                 int maxLevel = EnchantmentLevelUtil.getMaxLevel(enchantment);
-                int extendedMaxLevel = maxLevel + CeiConfigs.SERVER.maxHyperEnchantingLevelExtension.get();
+                int extension = CeiDataMaps.getEffectiveSuperEnchantingLevelExtension(
+                        enchantment, CeiConfigs.SERVER.maxHyperEnchantingLevelExtension.get());
+                int extendedMaxLevel = maxLevel + extension;
 
                 if (resultLevel > extendedMaxLevel) {
                     resultLevel = extendedMaxLevel;
@@ -524,7 +528,9 @@ public class BlazeForgerInventory extends ItemStackHandler {
             if (applicable) {
                 applied = true;
                 int maxLevel = EnchantmentLevelUtil.getMaxLevel(enchantment);
-                int extendedMaxLevel = maxLevel + CeiConfigs.SERVER.maxHyperEnchantingLevelExtension.get();
+                int extension = CeiDataMaps.getEffectiveSuperEnchantingLevelExtension(
+                        enchantment, CeiConfigs.SERVER.maxHyperEnchantingLevelExtension.get());
+                int extendedMaxLevel = maxLevel + extension;
 
                 if (resultLevel > extendedMaxLevel) {
                     resultLevel = extendedMaxLevel;

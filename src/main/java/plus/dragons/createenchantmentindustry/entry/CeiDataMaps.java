@@ -68,9 +68,23 @@ public class CeiDataMaps {
 
     // ── Forging Cost Multiplier ─────────────────────────────────────────
     private static double forgingCostMultiplier = 1.0;
+    // Per-enchantment forging cost multipliers (overrides global when present)
+    private static final Map<net.minecraft.world.item.enchantment.Enchantment, Float> PER_ENCHANTMENT_FORGING_COST = new LinkedHashMap<>();
 
     // ── Splitting Cost Multiplier ───────────────────────────────────────
     private static double splittingCostMultiplier = 1.0;
+    // Per-enchantment splitting cost multipliers (overrides global when present)
+    private static final Map<net.minecraft.world.item.enchantment.Enchantment, Float> PER_ENCHANTMENT_SPLITTING_COST = new LinkedHashMap<>();
+
+    // ── Super Enchanting Level Extension ─────────────────────────────────
+    // Per-enchantment max level extension (overrides config maxHyperEnchantingLevelExtension)
+    private static final Map<net.minecraft.world.item.enchantment.Enchantment, Integer> PER_ENCHANTMENT_SUPER_LEVEL_EXT = new LinkedHashMap<>();
+
+    // ── Per-PrintEntry Fluid -> cost override ─────────────────────────────
+    // Maps a print entry ID -> (Fluid -> cost) to allow data-driven overrides of
+    // printer costs per print type and per fluid. Equivalent to upstream's
+    // per-print-type DataMaps (PRINTING_ENCHANTED_BOOK, PRINTING_WRITTEN_BOOK, etc.).
+    private static final Map<String, Map<Fluid, Integer>> PRINT_TYPE_COSTS = new LinkedHashMap<>();
 
     // ── Custom Name Printing: Fluid -> ink amount required ──────────────
     // Maps a Fluid to the amount of fluid required for custom name printing.
@@ -156,6 +170,48 @@ public class CeiDataMaps {
      */
     public static int getXpPerMb(Fluid fluid) {
         return XP_FLUID_UNITS.getOrDefault(fluid, 0);
+    }
+
+    /**
+     * Get the mB-per-XP ratio for a fluid (upstream semantic: FLUID_UNIT_EXPERIENCE).
+     * <p>
+     * Upstream CEI uses "how many mB = 1 XP" as the primary unit model.
+     * This method provides the same semantic: for experience (xpPerMb=1) returns 1.0,
+     * for hyper experience (xpPerMb=10) returns 0.1.
+     *
+     * @param fluid the fluid to query
+     * @return mB required per 1 XP, or 0.0 if not an XP fluid
+     */
+    public static double getFluidUnitsPerXp(Fluid fluid) {
+        int xpPerMb = getXpPerMb(fluid);
+        if (xpPerMb <= 0) return 0.0;
+        return 1.0 / xpPerMb;
+    }
+
+    /**
+     * Convert an XP amount to the required fluid amount in mB for a given fluid.
+     * Uses upstream-semantic conversion (mB = xp * fluidUnitsPerXp).
+     *
+     * @param fluid the XP fluid
+     * @param xp    the experience points to convert
+     * @return mB of fluid required, or 0 if not an XP fluid
+     */
+    public static int xpToFluidAmount(Fluid fluid, int xp) {
+        int xpPerMb = getXpPerMb(fluid);
+        if (xpPerMb <= 0) return 0;
+        // mB = ceil(xp / xpPerMb) to avoid rounding down to 0
+        return (xp + xpPerMb - 1) / xpPerMb;
+    }
+
+    /**
+     * Convert a fluid amount in mB to XP for a given fluid.
+     *
+     * @param fluid    the XP fluid
+     * @param fluidMb  the amount of fluid in mB
+     * @return experience points, or 0 if not an XP fluid
+     */
+    public static int fluidAmountToXp(Fluid fluid, int fluidMb) {
+        return fluidMb * getXpPerMb(fluid);
     }
 
     /**
@@ -250,6 +306,120 @@ public class CeiDataMaps {
 
     public static double getSplittingCostMultiplier() {
         return splittingCostMultiplier;
+    }
+
+    // ── Per-Enchantment Forging Cost ─────────────────────────────────────
+
+    /**
+     * Register a per-enchantment forging cost multiplier.
+     * When present, this overrides the global forgingCostMultiplier for this enchantment.
+     */
+    public static void setForgingCostMultiplier(net.minecraft.world.item.enchantment.Enchantment enchantment, float multiplier) {
+        PER_ENCHANTMENT_FORGING_COST.put(enchantment, multiplier);
+    }
+
+    /**
+     * Get the forging cost multiplier for a specific enchantment.
+     * Falls back to the global multiplier if no per-enchantment override exists.
+     */
+    public static double getForgingCostMultiplier(net.minecraft.world.item.enchantment.Enchantment enchantment) {
+        Float perEnchantment = PER_ENCHANTMENT_FORGING_COST.get(enchantment);
+        return perEnchantment != null ? perEnchantment : forgingCostMultiplier;
+    }
+
+    // ── Per-Enchantment Splitting Cost ───────────────────────────────────
+
+    /**
+     * Register a per-enchantment splitting cost multiplier.
+     * When present, this overrides the global splittingCostMultiplier for this enchantment.
+     */
+    public static void setSplittingCostMultiplier(net.minecraft.world.item.enchantment.Enchantment enchantment, float multiplier) {
+        PER_ENCHANTMENT_SPLITTING_COST.put(enchantment, multiplier);
+    }
+
+    /**
+     * Get the splitting cost multiplier for a specific enchantment.
+     * Falls back to the global multiplier if no per-enchantment override exists.
+     */
+    public static double getSplittingCostMultiplier(net.minecraft.world.item.enchantment.Enchantment enchantment) {
+        Float perEnchantment = PER_ENCHANTMENT_SPLITTING_COST.get(enchantment);
+        return perEnchantment != null ? perEnchantment : splittingCostMultiplier;
+    }
+
+    // ── Per-Enchantment Super Enchanting Level Extension ─────────────────
+
+    /**
+     * Register a per-enchantment super enchanting level extension.
+     * When present, this overrides the global maxHyperEnchantingLevelExtension config for this enchantment.
+     */
+    public static void setSuperEnchantingLevelExtension(net.minecraft.world.item.enchantment.Enchantment enchantment, int extension) {
+        PER_ENCHANTMENT_SUPER_LEVEL_EXT.put(enchantment, extension);
+    }
+
+    /**
+     * Get the super enchanting level extension for a specific enchantment.
+     * Returns -1 if no per-enchantment override exists (caller should fall back to config).
+     */
+    public static int getSuperEnchantingLevelExtension(net.minecraft.world.item.enchantment.Enchantment enchantment) {
+        return PER_ENCHANTMENT_SUPER_LEVEL_EXT.getOrDefault(enchantment, -1);
+    }
+
+    /**
+     * Get the effective max level extension for an enchantment, checking per-enchantment
+     * override first, then falling back to the global config value.
+     *
+     * @param enchantment the enchantment to query
+     * @param globalFallback the global config value (CeiConfigs.SERVER.maxHyperEnchantingLevelExtension)
+     * @return the effective level extension
+     */
+    public static int getEffectiveSuperEnchantingLevelExtension(net.minecraft.world.item.enchantment.Enchantment enchantment, int globalFallback) {
+        int perEnchantment = getSuperEnchantingLevelExtension(enchantment);
+        return perEnchantment >= 0 ? perEnchantment : globalFallback;
+    }
+
+    // ── Per-PrintEntry Cost Overrides ──────────────────────────────────
+
+    /**
+     * Register a per-print-type fluid cost override.
+     * Equivalent to upstream's per-print-type DataMaps (PRINTING_ENCHANTED_BOOK, etc.).
+     * <p>
+     * When a PrintEntry queries its cost, it can check this registry first for a
+     * fluid-specific override before falling back to config values.
+     *
+     * @param printEntryId the print entry ID (e.g., "create_enchantment_industry:enchanted_book")
+     * @param fluid        the fluid to set the cost for
+     * @param costMb       the cost in mB
+     */
+    public static void registerPrintTypeCost(String printEntryId, Fluid fluid, int costMb) {
+        PRINT_TYPE_COSTS.computeIfAbsent(printEntryId, k -> new LinkedHashMap<>()).put(fluid, costMb);
+    }
+
+    /**
+     * Get the per-print-type fluid cost override, or -1 if no override is registered.
+     *
+     * @param printEntryId the print entry ID
+     * @param fluid        the fluid being used
+     * @return the cost in mB, or -1 if no override exists
+     */
+    public static int getPrintTypeCost(String printEntryId, Fluid fluid) {
+        Map<Fluid, Integer> costs = PRINT_TYPE_COSTS.get(printEntryId);
+        if (costs == null) return -1;
+        return costs.getOrDefault(fluid, -1);
+    }
+
+    /**
+     * Check if a per-print-type fluid cost override exists.
+     */
+    public static boolean hasPrintTypeCost(String printEntryId, Fluid fluid) {
+        Map<Fluid, Integer> costs = PRINT_TYPE_COSTS.get(printEntryId);
+        return costs != null && costs.containsKey(fluid);
+    }
+
+    /**
+     * Returns an unmodifiable view of all per-print-type cost overrides.
+     */
+    public static Map<String, Map<Fluid, Integer>> getAllPrintTypeCosts() {
+        return Collections.unmodifiableMap(PRINT_TYPE_COSTS);
     }
 
     // ── Custom Name Ink ─────────────────────────────────────────────────

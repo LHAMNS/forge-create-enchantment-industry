@@ -7,6 +7,7 @@ import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.event.AddReloadListenerEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -73,6 +74,11 @@ public class EnchantmentIndustry {
     private void registerForgeEvents(IEventBus forgeEventBus) {
         forgeEventBus.addListener(CeiFluids::handleInkEffect);
         forgeEventBus.addListener(BlazeForgerConversion::onRightClickBlock);
+        forgeEventBus.addListener(EnchantmentIndustry::onAddReloadListeners);
+    }
+
+    private static void onAddReloadListeners(AddReloadListenerEvent event) {
+        event.addListener(new CeiExperienceFluidReloadListener());
     }
     
     @SubscribeEvent

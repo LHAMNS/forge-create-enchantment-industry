@@ -21,6 +21,8 @@ import net.minecraft.world.Containers;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.stats.Stats;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
@@ -42,6 +44,7 @@ import plus.dragons.createenchantmentindustry.entry.CeiRecipeTypes;
 import plus.dragons.createenchantmentindustry.entry.CeiStats;
 import plus.dragons.createenchantmentindustry.foundation.advancement.CeiAdvancements;
 import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
+import plus.dragons.createenchantmentindustry.foundation.mixin.dragonLibLegacy.AdvancementBehaviourAccessor;
 
 import java.util.List;
 
@@ -222,10 +225,9 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
                 applicable = fill(fluidResults.get(0));
             if (applicable) {
                 if (!fluidResults.isEmpty() && fluidResults.get(0).getFluid().isSame(CeiFluids.EXPERIENCE.get().getSource())) {
-                    // Upstream (1.21.1) tracks grinding stats via advancement.awardStat(CEIStats.GRIND, amount).
-                    // The CEIStats custom stat system is not ported to this Forge build because Forge 1.20.1
-                    // uses a different custom stat registration API. The grinding functionality itself works
-                    // identically - only the stat tracking for advancements is omitted.
+                    // Track grinding stats using CEI custom stats
+                    int xpAmount = fluidResults.get(0).getAmount();
+                    awardGrindingStat(xpAmount);
                 }
                 inventory.clear();
                 var grinded = recipe.rollResults();
@@ -248,11 +250,31 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
             var result = grindstone.get();
             var fluid = new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), result.experience());
             if (fill(fluid)) {
+                // Track grinding stats
+                awardGrindingStat(result.experience());
                 inventory.clear();
                 inventory.setStackInSlot(0, result.top());
                 inventory.setStackInSlot(1, result.bottom());
                 inventory.setStackInSlot(2, result.output());
             }
+        }
+    }
+
+    /**
+     * Award the MECHANICAL_GRINDSTONE_EXPERIENCE custom stat to the player who placed this block.
+     * Uses the AdvancementBehaviour to find the owning player.
+     */
+    private void awardGrindingStat(int xpAmount) {
+        if (level == null || level.isClientSide || xpAmount <= 0) return;
+        var advBehaviour = getBehaviour(AdvancementBehaviour.TYPE);
+        if (advBehaviour == null) return;
+        // Use the accessor to get the player ID from advancement behaviour
+        var accessor = (plus.dragons.createenchantmentindustry.foundation.mixin.dragonLibLegacy.AdvancementBehaviourAccessor) advBehaviour;
+        var playerId = accessor.getPlayerId();
+        if (playerId == null) return;
+        var player = level.getPlayerByUUID(playerId);
+        if (player instanceof ServerPlayer serverPlayer) {
+            serverPlayer.awardStat(Stats.CUSTOM.get(CeiStats.MECHANICAL_GRINDSTONE_EXPERIENCE.get()), xpAmount);
         }
     }
 

@@ -39,8 +39,10 @@ public class ExperienceHatchBehaviour extends FilteringBehaviour {
             int amount = count == 0 ? Integer.MAX_VALUE : count * POINTS_PER_SCROLL;
             return new FluidStack(CeiFluids.EXPERIENCE.get(), amount);
         }
-        int amount = count * POINTS_PER_SCROLL;
-        amount = count == 0 ? Integer.MAX_VALUE : amount;
+        // Convert XP points to mB using the fluid's ratio
+        int xpPoints = count * POINTS_PER_SCROLL;
+        int amount = count == 0 ? Integer.MAX_VALUE : CeiDataMaps.xpToFluidAmount(filterFluid.getFluid(), xpPoints);
+        if (amount == 0 && count != 0) amount = xpPoints; // fallback for unregistered fluids
         return new FluidStack(filterFluid.getFluid(), amount);
     }
 
@@ -53,7 +55,11 @@ public class ExperienceHatchBehaviour extends FilteringBehaviour {
             int amount = count == 0 ? available : Math.min(available, count * POINTS_PER_SCROLL);
             return new FluidStack(CeiFluids.EXPERIENCE.get(), amount);
         }
-        int amount = count == 0 ? available : Math.min(available, count * POINTS_PER_SCROLL);
+        // Convert XP points to mB using the fluid's ratio
+        int xpPoints = count * POINTS_PER_SCROLL;
+        int mbLimit = count == 0 ? available : CeiDataMaps.xpToFluidAmount(filterFluid.getFluid(), xpPoints);
+        if (mbLimit == 0 && count != 0) mbLimit = xpPoints; // fallback for unregistered fluids
+        int amount = count == 0 ? available : Math.min(available, mbLimit);
         return new FluidStack(filterFluid.getFluid(), amount);
     }
 
