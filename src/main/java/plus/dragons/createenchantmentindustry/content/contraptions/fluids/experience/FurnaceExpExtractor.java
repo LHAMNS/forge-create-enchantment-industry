@@ -102,9 +102,11 @@ public class FurnaceExpExtractor implements IFluidHandler{
                 if (exp <= maxDrain - result) {
                     result+=exp;
                 } else {
+                    // This recipe doesn't fit in the remaining budget, keep it
                     done = true;
                     if (action.execute()) {
                         recipesUsed.clear();
+                        BE.setRecipeUsed(recipe);
                     }
                 }
             }

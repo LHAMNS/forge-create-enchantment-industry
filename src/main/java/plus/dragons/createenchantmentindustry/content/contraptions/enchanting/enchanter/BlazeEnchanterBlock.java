@@ -190,6 +190,8 @@ public class BlazeEnchanterBlock extends HorizontalDirectionalBlock implements I
                     if (!worldIn.isClientSide) {
                         ItemStack templateCopy = heldItem.copyWithCount(1);
                         if (te.setTemplateItem(templateCopy)) {
+                            if (!player.getAbilities().instabuild)
+                                heldItem.shrink(1);
                             te.notifyUpdate();
                         }
                     }

@@ -897,7 +897,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
      */
     @Nullable
     private BlockPos findNearbyLightningRod(ServerLevel level, BlockPos strikePos) {
-        int searchRadius = 128;
+        int searchRadius = 32;
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
         for (int dx = -searchRadius; dx <= searchRadius; dx++) {
             for (int dz = -searchRadius; dz <= searchRadius; dz++) {
