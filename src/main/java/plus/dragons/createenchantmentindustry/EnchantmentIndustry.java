@@ -82,6 +82,7 @@ public class EnchantmentIndustry {
             CeiAdvancements.register();
             CeiPackets.registerPackets();
             CeiFluids.registerLavaReaction();
+            CeiTags.initEnchantmentFilters();
             ApotheosisCompat.addPotionMixingRecipes();
             ApotheosisCompat.banTomeFromEnchanter();
             QuarkCompat.registerPrintEntry();

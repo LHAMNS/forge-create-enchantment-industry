@@ -17,6 +17,7 @@ import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
+import com.simibubi.create.AllBlocks;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleOptions;
@@ -29,6 +30,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
 import net.minecraft.world.Containers;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -36,8 +38,10 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.level.block.LightningRodBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -77,6 +81,8 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     /** Current enchanting behaviour - switches between guide-based and template-based. */
     EnchantingBehaviour enchantingBehaviour = new EnchantingBehaviour();
     int processingTicks;
+    /** Whether this enchanter is in "cursed" mode (hyper mode with lightning rod deflecting lightning). */
+    protected boolean cursed;
     Map<Direction, LazyOptional<EnchantingItemHandler>> itemHandlers;
     boolean sendParticles;
     LerpedFloat headAnimation;
@@ -124,7 +130,8 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         registerAwardables(behaviours,
                 CeiAdvancements.FIRST_ORDER.asCreateAdvancement(),
                 CeiAdvancements.ADDITIONAL_ORDER.asCreateAdvancement(),
-                CeiAdvancements.HYPOTHETICAL_EXTENSION.asCreateAdvancement());
+                CeiAdvancements.HYPOTHETICAL_EXTENSION.asCreateAdvancement(),
+                CeiAdvancements.OSHA_VIOLATION.asCreateAdvancement());
     }
 
     @Override
@@ -136,6 +143,14 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         if (onClient) {
             bookTick();
             blazeTick();
+        }
+
+        // Update cursed state: in hyper mode, if lightning rod is nearby, enchanting becomes cursed
+        boolean isHyper = hyper();
+        var strikePos = getStrikePos();
+        boolean newCursed = isHyper && strikePos != null && !worldPosition.equals(strikePos);
+        if (this.cursed != newCursed) {
+            this.cursed = newCursed;
         }
 
         if (heldItem == null) {
@@ -388,8 +403,22 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
                 return true;
             }
 
+            // Lightning strike check in hyper mode
+            if (hyper && !cursed && level instanceof ServerLevel serverLevel) {
+                var lightningStrikePos = getStrikePos();
+                if (lightningStrikePos != null && strikeLightning(serverLevel, lightningStrikePos)) {
+                    award(CeiAdvancements.OSHA_VIOLATION.asCreateAdvancement());
+                    serverLevel.destroyBlock(worldPosition, false);
+                    serverLevel.setBlockAndUpdate(worldPosition, AllBlocks.BLAZE_BURNER.getDefaultState());
+                    return false;
+                }
+            }
             // Process finished - apply template enchanting
             enchantingBehaviour.applyEnchantment(heldItem.stack, targetItem, hyper);
+            // In cursed mode, also apply a random curse enchantment
+            if (cursed) {
+                Enchanting.applyCurseEnchantment(heldItem.stack, random);
+            }
             internalTank.getPrimaryHandler().drain(exp, IFluidHandler.FluidAction.EXECUTE);
             // Consume the template item to prevent infinite reuse (item duplication)
             templateItem.shrink(1);
@@ -424,6 +453,16 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
             return true;
         }
 
+        // Lightning strike check in hyper mode
+        if (hyper && !cursed && level instanceof ServerLevel serverLevel) {
+            var lightningStrikePos = getStrikePos();
+            if (lightningStrikePos != null && strikeLightning(serverLevel, lightningStrikePos)) {
+                award(CeiAdvancements.OSHA_VIOLATION.asCreateAdvancement());
+                serverLevel.destroyBlock(worldPosition, false);
+                serverLevel.setBlockAndUpdate(worldPosition, AllBlocks.BLAZE_BURNER.getDefaultState());
+                return false;
+            }
+        }
         // Advancement
         if (EnchantmentHelper.getEnchantments(heldItem.stack).isEmpty())
             award(CeiAdvancements.FIRST_ORDER.asCreateAdvancement());
@@ -433,6 +472,10 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
             award(CeiAdvancements.HYPOTHETICAL_EXTENSION.asCreateAdvancement());
         // Process finished
         Enchanting.enchantItem(heldItem.stack, entry);
+        // In cursed mode, also apply a random curse enchantment
+        if (cursed) {
+            Enchanting.applyCurseEnchantment(heldItem.stack, random);
+        }
         internalTank.getPrimaryHandler().drain(exp, IFluidHandler.FluidAction.EXECUTE);
         sendParticles = true;
         notifyUpdate();
@@ -676,6 +719,62 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         }
         containedFluidTooltip(tooltip, isPlayerSneaking, getCapability(ForgeCapabilities.FLUID_HANDLER));
         return true;
+    }
+
+    // ── Lightning Strike Logic (matches upstream BlazeExperienceBlockEntity) ──
+
+    /**
+     * Get the position where lightning would strike above this block.
+     * Returns null if the dimension has no sky light or has a ceiling.
+     */
+    @Nullable
+    protected BlockPos getStrikePos() {
+        if (level == null) return null;
+        var dimension = level.dimensionType();
+        if (!dimension.hasSkyLight()) return null;
+        if (dimension.hasCeiling()) return null;
+        return level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, worldPosition).below();
+    }
+
+    /**
+     * Attempt to strike lightning at the given position.
+     * Returns true if the lightning hits directly (no lightning rod protection),
+     * meaning the machine should self-destruct.
+     */
+    protected boolean strikeLightning(ServerLevel serverLevel, BlockPos strikePos) {
+        var lightning = EntityType.LIGHTNING_BOLT.create(serverLevel);
+        if (lightning == null) return false;
+        // Check if there's a lightning rod that could deflect the strike
+        // Look in a reasonable area above for a lightning rod
+        BlockPos rodPos = findNearbyLightningRod(serverLevel, strikePos);
+        if (rodPos != null) {
+            lightning.moveTo(Vec3.atBottomCenterOf(rodPos.above()));
+        } else {
+            lightning.moveTo(Vec3.atBottomCenterOf(strikePos.above()));
+        }
+        serverLevel.addFreshEntity(lightning);
+        return rodPos == null; // Direct hit if no rod found
+    }
+
+    /**
+     * Search for a lightning rod near the strike position.
+     */
+    @Nullable
+    private BlockPos findNearbyLightningRod(ServerLevel level, BlockPos strikePos) {
+        int searchRadius = 128;
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+        for (int dx = -searchRadius; dx <= searchRadius; dx++) {
+            for (int dz = -searchRadius; dz <= searchRadius; dz++) {
+                mutable.set(strikePos.getX() + dx, 0, strikePos.getZ() + dz);
+                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, mutable.getX(), mutable.getZ()) - 1;
+                mutable.setY(surfaceY);
+                BlockState state = level.getBlockState(mutable);
+                if (state.getBlock() instanceof LightningRodBlock) {
+                    return mutable.immutable();
+                }
+            }
+        }
+        return null;
     }
 
     public void updateHeatLevel(BlazeEnchanterBlock.HeatLevel heatLevel) {

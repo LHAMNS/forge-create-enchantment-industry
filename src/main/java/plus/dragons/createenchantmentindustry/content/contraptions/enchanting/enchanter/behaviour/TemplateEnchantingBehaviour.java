@@ -6,6 +6,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.Enchanting;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.EnchantingTemplateItem;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.EnchantmentEntry;
+import plus.dragons.createenchantmentindustry.entry.CeiTags;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -90,8 +91,17 @@ public class TemplateEnchantingBehaviour extends EnchantingBehaviour {
         List<EnchantmentInstance> result = new ArrayList<>();
         if (templateTarget.isEmpty()) return result;
 
-        // Get all enchantments that can be applied to the template target
+        // Get all enchantments that can be applied to the template target,
+        // filtered by the enchantment tag system
         for (Enchantment enchantment : net.minecraftforge.registries.ForgeRegistries.ENCHANTMENTS) {
+            // Check enchantment tag availability
+            if (hyper) {
+                if (!CeiTags.isAvailableForSuperEnchanting(enchantment))
+                    continue;
+            } else {
+                if (!CeiTags.isAvailableForNormalEnchanting(enchantment))
+                    continue;
+            }
             if (enchantment.canEnchant(templateTarget) || enchantment.category.canEnchant(templateTarget.getItem())) {
                 int maxLevel = enchantment.getMaxLevel();
                 // In hyper mode, we can go 1 level higher

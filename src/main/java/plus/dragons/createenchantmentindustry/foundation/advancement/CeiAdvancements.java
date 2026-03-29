@@ -150,6 +150,15 @@ public class CeiAdvancements {
             .icon(Items.ANVIL)
             .parent(BLAZES_NEW_JOB)
             .build(),
+    // OSHA Violation - Lightning destroys the machine
+    OSHA_VIOLATION = ADVANCEMENT_FACTORY.builder("osha_violation")
+            .title("OSHA Violation")
+            .description("Watch your Blaze Enchanter or Forger get destroyed by lightning due to lack of a lightning rod")
+            .icon(Items.BARRIER)
+            .announce(true)
+            .frame(FrameType.GOAL)
+            .parent(HYPOTHETICAL_EXTENSION)
+            .build(),
     END = null;
     
     public static void register() {

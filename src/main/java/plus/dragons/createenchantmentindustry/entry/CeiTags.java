@@ -20,8 +20,12 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.IForgeRegistry;
 import plus.dragons.createenchantmentindustry.EnchantmentIndustry;
 
+import net.minecraft.world.item.enchantment.Enchantment;
+
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 
 
 public class CeiTags {
@@ -236,6 +240,79 @@ public class CeiTags {
         }
 
         private static void init() {
+        }
+    }
+
+    // ── Enchantment Filter System ──────────────────────────────────────
+    // Forge 1.20.1 does not have enchantment tags. This runtime system mirrors
+    // the upstream 1.21.1 enchantment tags: enchanting, super_enchanting,
+    // enchanting_exclusive, and super_enchanting_exclusive.
+    //
+    // By default:
+    //   - "enchanting" includes all enchantable-table enchantments
+    //   - "super_enchanting" includes enchanting + treasure (minus curses)
+    //   - "enchanting_exclusive" = enchantments that should NOT appear in super mode
+    //   - "super_enchanting_exclusive" = treasure enchantments (minus curses)
+    //
+    // Mods can call addEnchantingExclusive / addSuperEnchantingExclusive at startup.
+
+    /** Enchantments explicitly excluded from normal enchanting mode. */
+    private static final Set<Enchantment> ENCHANTING_EXCLUSIVE = new HashSet<>();
+    /** Enchantments explicitly excluded from super enchanting mode. */
+    private static final Set<Enchantment> SUPER_ENCHANTING_EXCLUSIVE = new HashSet<>();
+
+    /**
+     * Check if an enchantment is available for normal (non-hyper) enchanting.
+     * Includes enchantable-table enchantments, excludes ENCHANTING_EXCLUSIVE.
+     */
+    public static boolean isAvailableForNormalEnchanting(Enchantment enchantment) {
+        if (ENCHANTING_EXCLUSIVE.contains(enchantment))
+            return false;
+        // Normal enchanting: only discoverable (non-treasure) enchantments,
+        // equivalent to upstream's "IN_ENCHANTING_TABLE" tag
+        return enchantment.isDiscoverable();
+    }
+
+    /**
+     * Check if an enchantment is available for super (hyper) enchanting.
+     * Includes normal enchanting + treasure enchantments, excludes curses.
+     */
+    public static boolean isAvailableForSuperEnchanting(Enchantment enchantment) {
+        // Super enchanting = normal pool + super_enchanting_exclusive (treasure minus curses)
+        if (enchantment.isCurse())
+            return false;
+        if (SUPER_ENCHANTING_EXCLUSIVE.contains(enchantment))
+            return true;
+        return isAvailableForNormalEnchanting(enchantment) && !ENCHANTING_EXCLUSIVE.contains(enchantment);
+    }
+
+    /**
+     * Add an enchantment to the normal-mode exclusion list.
+     * This enchantment will not appear in normal enchanting but may still
+     * appear in super enchanting.
+     */
+    public static void addEnchantingExclusive(Enchantment enchantment) {
+        ENCHANTING_EXCLUSIVE.add(enchantment);
+    }
+
+    /**
+     * Add an enchantment to the super-enchanting-exclusive list.
+     * This makes it available in super mode (like treasure enchantments).
+     */
+    public static void addSuperEnchantingExclusive(Enchantment enchantment) {
+        SUPER_ENCHANTING_EXCLUSIVE.add(enchantment);
+    }
+
+    /**
+     * Initialize the default enchantment filters.
+     * Called during mod setup after enchantments are registered.
+     */
+    public static void initEnchantmentFilters() {
+        // By default, treasure enchantments (minus curses) are super_enchanting_exclusive
+        for (Enchantment enchantment : ForgeRegistries.ENCHANTMENTS) {
+            if (enchantment.isTreasureOnly() && !enchantment.isCurse()) {
+                SUPER_ENCHANTING_EXCLUSIVE.add(enchantment);
+            }
         }
     }
 

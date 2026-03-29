@@ -9,11 +9,13 @@ import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import plus.dragons.createenchantmentindustry.EnchantmentIndustry;
 import plus.dragons.createenchantmentindustry.entry.CeiItems;
+import plus.dragons.createenchantmentindustry.entry.CeiTags;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.function.Predicate;
 
 public class Enchanting {
@@ -51,6 +53,15 @@ public class Enchanting {
         if (entry == null || !entry.valid())
             return null;
         var enchantment = entry.getFirst();
+
+        // Check enchantment tag availability
+        if (hyper) {
+            if (!CeiTags.isAvailableForSuperEnchanting(enchantment))
+                return null;
+        } else {
+            if (!CeiTags.isAvailableForNormalEnchanting(enchantment))
+                return null;
+        }
 
         ItemStack toCheck = itemStack.copy();
         Map<Enchantment, Integer> modified = EnchantmentHelper.getEnchantments(toCheck);
@@ -111,5 +122,27 @@ public class Enchanting {
         int xpLevel = enchantment.getMinCost(level) + level * rarityLevel(enchantment.getRarity());
         return expPointForNextLevel(xpLevel);
     }
-    
+
+    /**
+     * When in cursed mode (lightning rod deflecting lightning in hyper mode),
+     * apply a random curse enchantment to the item alongside the normal enchantment.
+     * This matches the upstream behaviour where curses get mixed into the enchantment pool.
+     */
+    public static void applyCurseEnchantment(ItemStack itemStack, Random random) {
+        List<Enchantment> curses = new ArrayList<>();
+        for (Enchantment enchantment : net.minecraftforge.registries.ForgeRegistries.ENCHANTMENTS) {
+            if (enchantment.isCurse() && enchantment.canEnchant(itemStack)) {
+                curses.add(enchantment);
+            }
+        }
+        if (!curses.isEmpty()) {
+            Enchantment curse = curses.get(random.nextInt(curses.size()));
+            Map<Enchantment, Integer> existing = EnchantmentHelper.getEnchantments(itemStack);
+            if (!existing.containsKey(curse)) {
+                existing.put(curse, 1);
+                EnchantmentHelper.setEnchantments(existing, itemStack);
+            }
+        }
+    }
+
 }

@@ -36,6 +36,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraftforge.network.NetworkHooks;
 import plus.dragons.createenchantmentindustry.entry.CeiBlockEntities;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
+import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.entry.CeiItems;
 
 import java.util.ArrayList;
@@ -92,6 +94,54 @@ public class BlazeEnchanterBlock extends HorizontalDirectionalBlock implements I
             heldItem = player.getItemInHand(handIn).copy();
         } else {
             heldItem = player.getItemInHand(handIn);
+        }
+
+        // Experience fuel handling: right-click with a registered fuel item to supply XP
+        if (!heldItem.isEmpty()) {
+            // Creative Blaze Cake (from Create) toggles creative mode on the tank
+            if (heldItem.is(AllItems.CREATIVE_BLAZE_CAKE.get())) {
+                return onBlockEntityUse(worldIn, pos, be -> {
+                    // Toggle heat level for creative fuel
+                    if (!worldIn.isClientSide) {
+                        var currentHeat = state.getValue(HEAT_LEVEL);
+                        var nextHeat = currentHeat.nextActiveLevel();
+                        be.updateHeatLevel(nextHeat);
+                        if (!player.getAbilities().instabuild)
+                            heldItem.shrink(1);
+                    }
+                    return InteractionResult.sidedSuccess(worldIn.isClientSide);
+                });
+            }
+            var fuel = CeiDataMaps.getExperienceFuel(heldItem);
+            if (fuel != null) {
+                return onBlockEntityUse(worldIn, pos, be -> {
+                    if (!worldIn.isClientSide) {
+                        var tank = be.internalTank.getPrimaryHandler();
+                        var currentFluid = tank.getFluid();
+                        var targetFluid = fuel.special()
+                                ? new net.minecraftforge.fluids.FluidStack(CeiFluids.HYPER_EXPERIENCE.get().getSource(), fuel.experience())
+                                : new net.minecraftforge.fluids.FluidStack(CeiFluids.EXPERIENCE.get().getSource(), fuel.experience());
+                        // Check fluid compatibility and capacity
+                        if (!currentFluid.isEmpty() && !currentFluid.isFluidEqual(targetFluid))
+                            return InteractionResult.FAIL;
+                        int filled = tank.fill(targetFluid, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE);
+                        if (filled <= 0)
+                            return InteractionResult.FAIL;
+                        tank.fill(targetFluid, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+                        if (!player.getAbilities().instabuild) {
+                            heldItem.shrink(1);
+                            fuel.usingConvertTo().ifPresent(remainder -> {
+                                ItemStack rem = remainder.copy();
+                                if (heldItem.isEmpty())
+                                    player.setItemInHand(handIn, rem);
+                                else
+                                    player.getInventory().placeItemBackInInventory(rem);
+                            });
+                        }
+                    }
+                    return InteractionResult.sidedSuccess(worldIn.isClientSide);
+                });
+            }
         }
 
         if (player.isShiftKeyDown() && heldItem.isEmpty()){

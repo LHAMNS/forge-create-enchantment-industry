@@ -1,6 +1,8 @@
 package plus.dragons.createenchantmentindustry.content.contraptions.enchanting.forger;
 
+import com.simibubi.create.AllBlocks;
 import com.simibubi.create.api.equipment.goggles.IHaveGoggleInformation;
+import com.simibubi.create.foundation.advancement.AdvancementBehaviour;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
@@ -20,9 +22,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.Mth;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.LightningRodBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
@@ -36,6 +41,7 @@ import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experi
 import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.entry.CeiTags;
+import plus.dragons.createenchantmentindustry.foundation.advancement.CeiAdvancements;
 import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 
 import javax.annotation.Nullable;
@@ -57,6 +63,7 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
 
     SmartFluidTankBehaviour internalTank;
     protected int processingTime = -1;
+    protected boolean cursed;
     protected final BlazeForgerInventory inventory;
 
     // Client-side animation
@@ -89,6 +96,9 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
                     else
                         updateHeatLevel(BlazeEnchanterBlock.HeatLevel.SMOULDERING);
                 }));
+        registerAwardables(behaviours,
+                CeiAdvancements.BLAZING_FUSION.asCreateAdvancement(),
+                CeiAdvancements.OSHA_VIOLATION.asCreateAdvancement());
     }
 
     @Override
@@ -99,6 +109,14 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
 
         if (onClient) {
             blazeTick();
+        }
+
+        // Update cursed state
+        boolean isHyper = hyper();
+        var strikePos = getStrikePos();
+        boolean newCursed = isHyper && strikePos != null && !worldPosition.equals(strikePos);
+        if (this.cursed != newCursed) {
+            this.cursed = newCursed;
         }
 
         if (level.isClientSide && isVirtual()) {
@@ -136,10 +154,21 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
                 notifyUpdate();
                 return;
             }
+            // Lightning strike check in hyper mode
+            if (isHyper && !cursed && level instanceof ServerLevel serverLevel) {
+                var lightningStrikePos = getStrikePos();
+                if (lightningStrikePos != null && strikeLightning(serverLevel, lightningStrikePos)) {
+                    award(CeiAdvancements.OSHA_VIOLATION.asCreateAdvancement());
+                    serverLevel.destroyBlock(worldPosition, false);
+                    serverLevel.setBlockAndUpdate(worldPosition, AllBlocks.BLAZE_BURNER.getDefaultState());
+                    return;
+                }
+            }
             // Forging complete
             consumeExperience(cost);
             processingTime = -1;
             inventory.applyResult();
+            award(CeiAdvancements.BLAZING_FUSION.asCreateAdvancement());
             notifyUpdate();
             level.playSound(null, worldPosition, SoundEvents.ANVIL_USE, SoundSource.BLOCKS,
                     1.0F, level.random.nextFloat() * 0.1F + 0.9F);
@@ -211,6 +240,48 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
 
     public boolean hyper() {
         return CeiFluids.HYPER_EXPERIENCE.is(internalTank.getPrimaryHandler().getFluid().getFluid());
+    }
+
+    // ── Lightning Strike Logic (matches upstream BlazeExperienceBlockEntity) ──
+
+    @Nullable
+    protected BlockPos getStrikePos() {
+        if (level == null) return null;
+        var dimension = level.dimensionType();
+        if (!dimension.hasSkyLight()) return null;
+        if (dimension.hasCeiling()) return null;
+        return level.getHeightmapPos(Heightmap.Types.MOTION_BLOCKING, worldPosition).below();
+    }
+
+    protected boolean strikeLightning(ServerLevel serverLevel, BlockPos strikePos) {
+        var lightning = EntityType.LIGHTNING_BOLT.create(serverLevel);
+        if (lightning == null) return false;
+        BlockPos rodPos = findNearbyLightningRod(serverLevel, strikePos);
+        if (rodPos != null) {
+            lightning.moveTo(Vec3.atBottomCenterOf(rodPos.above()));
+        } else {
+            lightning.moveTo(Vec3.atBottomCenterOf(strikePos.above()));
+        }
+        serverLevel.addFreshEntity(lightning);
+        return rodPos == null;
+    }
+
+    @Nullable
+    private BlockPos findNearbyLightningRod(ServerLevel level, BlockPos strikePos) {
+        int searchRadius = 128;
+        BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+        for (int dx = -searchRadius; dx <= searchRadius; dx++) {
+            for (int dz = -searchRadius; dz <= searchRadius; dz++) {
+                mutable.set(strikePos.getX() + dx, 0, strikePos.getZ() + dz);
+                int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, mutable.getX(), mutable.getZ()) - 1;
+                mutable.setY(surfaceY);
+                BlockState state = level.getBlockState(mutable);
+                if (state.getBlock() instanceof LightningRodBlock) {
+                    return mutable.immutable();
+                }
+            }
+        }
+        return null;
     }
 
     protected boolean canConsumeExperience(int amount) {

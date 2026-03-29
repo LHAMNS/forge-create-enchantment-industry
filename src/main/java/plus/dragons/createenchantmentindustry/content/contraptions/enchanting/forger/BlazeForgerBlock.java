@@ -34,6 +34,8 @@ import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.BlazeEnchanterBlock;
 import plus.dragons.createenchantmentindustry.entry.CeiBlockEntities;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
+import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -91,6 +93,51 @@ public class BlazeForgerBlock extends HorizontalDirectionalBlock implements IWre
             heldItem = player.getItemInHand(handIn).copy();
         } else {
             heldItem = player.getItemInHand(handIn);
+        }
+
+        // Experience fuel handling: right-click with a registered fuel item to supply XP
+        if (!heldItem.isEmpty()) {
+            if (heldItem.is(AllItems.CREATIVE_BLAZE_CAKE.get())) {
+                return onBlockEntityUse(worldIn, pos, be -> {
+                    if (!worldIn.isClientSide) {
+                        var currentHeat = state.getValue(HEAT_LEVEL);
+                        var nextHeat = currentHeat.nextActiveLevel();
+                        be.updateHeatLevel(nextHeat);
+                        if (!player.getAbilities().instabuild)
+                            heldItem.shrink(1);
+                    }
+                    return InteractionResult.sidedSuccess(worldIn.isClientSide);
+                });
+            }
+            var fuel = CeiDataMaps.getExperienceFuel(heldItem);
+            if (fuel != null) {
+                return onBlockEntityUse(worldIn, pos, be -> {
+                    if (!worldIn.isClientSide) {
+                        var tank = be.internalTank.getPrimaryHandler();
+                        var currentFluid = tank.getFluid();
+                        var targetFluid = fuel.special()
+                                ? new net.minecraftforge.fluids.FluidStack(CeiFluids.HYPER_EXPERIENCE.get().getSource(), fuel.experience())
+                                : new net.minecraftforge.fluids.FluidStack(CeiFluids.EXPERIENCE.get().getSource(), fuel.experience());
+                        if (!currentFluid.isEmpty() && !currentFluid.isFluidEqual(targetFluid))
+                            return InteractionResult.FAIL;
+                        int filled = tank.fill(targetFluid, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE);
+                        if (filled <= 0)
+                            return InteractionResult.FAIL;
+                        tank.fill(targetFluid, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
+                        if (!player.getAbilities().instabuild) {
+                            heldItem.shrink(1);
+                            fuel.usingConvertTo().ifPresent(remainder -> {
+                                ItemStack rem = remainder.copy();
+                                if (heldItem.isEmpty())
+                                    player.setItemInHand(handIn, rem);
+                                else
+                                    player.getInventory().placeItemBackInInventory(rem);
+                            });
+                        }
+                    }
+                    return InteractionResult.sidedSuccess(worldIn.isClientSide);
+                });
+            }
         }
 
         return onBlockEntityUse(worldIn, pos, be -> {

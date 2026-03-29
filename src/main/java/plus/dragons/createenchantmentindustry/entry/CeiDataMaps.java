@@ -1,13 +1,18 @@
 package plus.dragons.createenchantmentindustry.entry;
 
+import com.simibubi.create.AllBlocks;
+import com.simibubi.create.AllItems;
 import net.minecraft.network.chat.Style;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import plus.dragons.createenchantmentindustry.EnchantmentIndustry;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
 
 import javax.annotation.Nullable;
+import java.util.Optional;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -23,6 +28,34 @@ import java.util.Map;
  * (enqueueWork) to add their own experience fluids.
  */
 public class CeiDataMaps {
+
+    // ── ExperienceFuel ──────────────────────────────────────────────────
+    // Forge 1.20.1 equivalent of the upstream NeoForge DataMap<Item, ExperienceFuel>.
+    // Maps an Item -> ExperienceFuelEntry so that players can right-click fuel items
+    // into the Blaze Enchanter or Blaze Forger to supply experience.
+
+    /**
+     * A fuel entry that an item can provide when right-clicked into a blaze machine.
+     * @param experience  XP amount this item provides (in mB of experience fluid)
+     * @param special     if true, fills the special (hyper) tank instead of normal
+     * @param usingConvertTo  optional remainder item after using the fuel (e.g., empty bucket)
+     */
+    public record ExperienceFuelEntry(int experience, boolean special, Optional<ItemStack> usingConvertTo) {
+        public static ExperienceFuelEntry normal(int experience) {
+            return new ExperienceFuelEntry(experience, false, Optional.empty());
+        }
+        public static ExperienceFuelEntry normal(int experience, ItemStack convertTo) {
+            return new ExperienceFuelEntry(experience, false, Optional.of(convertTo));
+        }
+        public static ExperienceFuelEntry special(int experience) {
+            return new ExperienceFuelEntry(experience, true, Optional.empty());
+        }
+        public static ExperienceFuelEntry special(int experience, ItemStack convertTo) {
+            return new ExperienceFuelEntry(experience, true, Optional.of(convertTo));
+        }
+    }
+
+    private static final Map<Item, ExperienceFuelEntry> EXPERIENCE_FUEL = new LinkedHashMap<>();
 
     // ── XP Fluid Units ──────────────────────────────────────────────────
     // Maps a Fluid -> XP per mB. For example, EXPERIENCE=1, HYPER_EXPERIENCE=10.
@@ -68,7 +101,15 @@ public class CeiDataMaps {
         registerCustomNameInk(CeiFluids.EXPERIENCE.get().getSource(), 10);
         registerCustomNameInk(CeiFluids.EXPERIENCE.get(), 10);
 
-        EnchantmentIndustry.LOGGER.debug("CeiDataMaps: Registered default XP fluids and custom name inks");
+        // Register default experience fuel items (matches upstream CEIDataMaps.generate)
+        // Create's own items
+        registerExperienceFuel(AllBlocks.EXPERIENCE_BLOCK.get().asItem(), ExperienceFuelEntry.normal(27));
+        registerExperienceFuel(AllItems.EXP_NUGGET.get(), ExperienceFuelEntry.normal(3));
+        // CEI items
+        registerExperienceFuel(CeiBlocks.SUPER_EXPERIENCE_BLOCK.get().asItem(), ExperienceFuelEntry.special(27));
+        registerExperienceFuel(CeiItems.SUPER_EXPERIENCE_NUGGET.get(), ExperienceFuelEntry.special(3));
+
+        EnchantmentIndustry.LOGGER.debug("CeiDataMaps: Registered default XP fluids, custom name inks, and experience fuels");
     }
 
     // ── Public API ──────────────────────────────────────────────────────
@@ -145,6 +186,40 @@ public class CeiDataMaps {
      */
     public static Map<Fluid, Integer> getAllXpFluids() {
         return Collections.unmodifiableMap(XP_FLUID_UNITS);
+    }
+
+    // ── Experience Fuel ────────────────────────────────────────────────
+
+    /**
+     * Register an item as an experience fuel for Blaze Enchanter/Forger.
+     * Other mods should call this during FMLCommonSetupEvent (enqueueWork).
+     */
+    public static void registerExperienceFuel(Item item, ExperienceFuelEntry fuel) {
+        EXPERIENCE_FUEL.put(item, fuel);
+    }
+
+    /**
+     * Get the ExperienceFuelEntry for an item, or null if it is not a registered fuel.
+     */
+    @Nullable
+    public static ExperienceFuelEntry getExperienceFuel(Item item) {
+        return EXPERIENCE_FUEL.get(item);
+    }
+
+    /**
+     * Get the ExperienceFuelEntry for an ItemStack, or null if not a fuel.
+     */
+    @Nullable
+    public static ExperienceFuelEntry getExperienceFuel(ItemStack stack) {
+        if (stack.isEmpty()) return null;
+        return EXPERIENCE_FUEL.get(stack.getItem());
+    }
+
+    /**
+     * Returns an unmodifiable view of all registered experience fuels.
+     */
+    public static Map<Item, ExperienceFuelEntry> getAllExperienceFuels() {
+        return Collections.unmodifiableMap(EXPERIENCE_FUEL);
     }
 
     // ── Printer Cost ────────────────────────────────────────────────────
