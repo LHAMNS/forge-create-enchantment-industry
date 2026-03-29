@@ -27,9 +27,10 @@ public class FurnaceExpExtractor implements IFluidHandler{
     int getTotalExp() {
         AtomicDouble result = new AtomicDouble(0);
         for (Object2IntMap.Entry<ResourceLocation> entry : recipesUsed.object2IntEntrySet()) {
-            BE.getLevel().getRecipeManager().byKey(entry.getKey()).ifPresent(recipe ->
-                    result.addAndGet(((AbstractCookingRecipe) recipe).getExperience() * entry.getIntValue())
-            );
+            BE.getLevel().getRecipeManager().byKey(entry.getKey()).ifPresent(recipe -> {
+                    if (recipe instanceof AbstractCookingRecipe cookingRecipe)
+                        result.addAndGet(cookingRecipe.getExperience() * entry.getIntValue());
+            });
         }
         return (int) Math.floor(result.floatValue());
     }
@@ -98,7 +99,8 @@ public class FurnaceExpExtractor implements IFluidHandler{
                     BE.setRecipeUsed(recipe);
                 }
             } else {
-                var exp = ((AbstractCookingRecipe) recipe).getExperience();
+                if (!(recipe instanceof AbstractCookingRecipe cookingRecipe)) continue;
+                var exp = cookingRecipe.getExperience();
                 if (exp <= maxDrain - result) {
                     result+=exp;
                 } else {

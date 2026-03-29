@@ -4,8 +4,9 @@ import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
 import com.simibubi.create.content.kinetics.mechanicalArm.ArmBlockEntity;
 import com.simibubi.create.content.logistics.depot.DepotBlockEntity;
-import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
+import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.BlazeEnchanterBlock;
+import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.forger.BlazeForgerBlock;
 import net.createmod.catnip.math.Pointing;
 import net.createmod.ponder.api.PonderPalette;
 import net.createmod.ponder.api.scene.SceneBuilder;
@@ -69,7 +70,7 @@ public class ForgerScene {
                     be.getCapability(net.minecraftforge.common.capabilities.ForgeCapabilities.FLUID_HANDLER)
                             .ifPresent(handler -> handler.fill(new FluidStack(CeiFluids.EXPERIENCE.get(), 4000), IFluidHandler.FluidAction.EXECUTE));
                 });
-        scene.world().modifyBlock(util.grid().at(2, 2, 1), bs -> bs.setValue(BlazeBurnerBlock.HEAT_LEVEL, BlazeBurnerBlock.HeatLevel.KINDLED), false);
+        scene.world().modifyBlock(util.grid().at(2, 2, 1), bs -> bs.setValue(BlazeForgerBlock.HEAT_LEVEL, BlazeEnchanterBlock.HeatLevel.KINDLED), false);
         scene.idle(55);
 
         scene.overlay().showText(80)

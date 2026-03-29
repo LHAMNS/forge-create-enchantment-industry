@@ -76,6 +76,8 @@ public class MechanicalGrindstoneBlock extends RotatedPillarKineticBlock impleme
             return InteractionResult.PASS;
         if (Math.abs(blockEntity.getSpeed()) < 30)
             return InteractionResult.PASS;
+        if (level.isClientSide)
+            return InteractionResult.SUCCESS;
         var location = hitResult.getLocation();
         // Sandpaper Polishing
         if (SandPaperPolishingRecipe.canPolish(level, stack)) {

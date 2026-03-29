@@ -38,6 +38,11 @@ public class EnchantingGuideEditPacket extends SimplePacketBase {
                     ItemStack mainHandItem = sender.getMainHandItem();
                     if (!CeiItems.ENCHANTING_GUIDE.isIn(mainHandItem))
                         return;
+                    // Validate index is non-negative
+                    if (index < 0) return;
+                    // Validate target item is an enchanted book or empty
+                    if (!itemStack.isEmpty() && !itemStack.is(net.minecraft.world.item.Items.ENCHANTED_BOOK))
+                        return;
 
                     CompoundTag tag = mainHandItem.getOrCreateTag();
                     tag.putInt("index", index);

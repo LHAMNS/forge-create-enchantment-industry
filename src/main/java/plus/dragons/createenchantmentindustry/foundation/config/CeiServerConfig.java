@@ -6,19 +6,19 @@ import net.minecraftforge.common.ForgeConfigSpec;
 
 public class CeiServerConfig extends ConfigBase {
 
-    public final ConfigBase.ConfigInt disenchanterTankCapacity = i(1000, 0,
+    public final ConfigBase.ConfigInt disenchanterTankCapacity = i(1000, 1,
         "disenchanterTankCapacity",
         Comments.disenchanterTankCapacity,
         ConfigAnnotations.RequiresRestart.SERVER.asComment());
-    public final ConfigInt copierTankCapacity = i(4000, 0,
+    public final ConfigInt copierTankCapacity = i(4000, 1,
         "copierTankCapacity",
         Comments.copierTankCapacity,
         ConfigAnnotations.RequiresRestart.SERVER.asComment());
-    public final ConfigInt blazeEnchanterTankCapacity = i(2000, 0,
+    public final ConfigInt blazeEnchanterTankCapacity = i(2000, 1,
         "blazeEnchanterTankCapacity",
         Comments.blazeEnchanterTankCapacity,
         ConfigAnnotations.RequiresRestart.SERVER.asComment());
-    public final ConfigInt blazeForgerTankCapacity = i(4000, 0,
+    public final ConfigInt blazeForgerTankCapacity = i(4000, 1,
         "blazeForgerTankCapacity",
         Comments.blazeForgerTankCapacity,
         ConfigAnnotations.RequiresRestart.SERVER.asComment());
@@ -73,7 +73,7 @@ public class CeiServerConfig extends ConfigBase {
     public final ConfigFloat regularLightningStrikeTransformXpBlockChance = f(1, 0, 1,
             "regularLightningStrikeTransformXpBlockChance",
             Comments.regularLightningStrikeTransformXpBlockChance);
-    public final ConfigInt mechanicalGrindstoneTankCapacity = i(1000, 0,
+    public final ConfigInt mechanicalGrindstoneTankCapacity = i(1000, 1,
             "mechanicalGrindstoneTankCapacity",
             Comments.mechanicalGrindstoneTankCapacity,
             ConfigAnnotations.RequiresRestart.SERVER.asComment());

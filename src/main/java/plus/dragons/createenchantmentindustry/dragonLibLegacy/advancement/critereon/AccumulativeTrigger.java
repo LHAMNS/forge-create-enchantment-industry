@@ -67,7 +67,9 @@ public class AccumulativeTrigger extends SimpleCriterionTrigger<AccumulativeTrig
             if(!compoundNBT.contains("AccumulativeData"))
                 return ret;
 
-            var list = NBTHelper.readCompoundList((ListTag) compoundNBT.get("AccumulativeData"), c -> new TriCell(
+            if (!(compoundNBT.get("AccumulativeData") instanceof ListTag accData))
+                return ret;
+            var list = NBTHelper.readCompoundList(accData, c -> new TriCell(
                     NBTHelper.readResourceLocation(c,"TriggerId"),
                     c.getUUID("PlayerId"),
                     c.getInt("Count")

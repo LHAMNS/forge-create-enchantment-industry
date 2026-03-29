@@ -4,7 +4,8 @@ import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
 import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
 import com.simibubi.create.content.logistics.depot.DepotBlockEntity;
-import com.simibubi.create.content.processing.burner.BlazeBurnerBlock;
+import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.BlazeEnchanterBlock;
+import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.forger.BlazeForgerBlock;
 import com.simibubi.create.foundation.ponder.CreateSceneBuilder;
 import net.createmod.ponder.api.PonderPalette;
 import net.createmod.ponder.api.scene.SceneBuilder;
@@ -134,7 +135,7 @@ public class ExperienceScene {
                 .attachKeyFrame()
                 .placeNearTarget()
                 .pointAt(util.vector().topOf(3, 2, 1));
-        scene.world().modifyBlock(util.grid().at(3, 3, 3), bs -> bs.setValue(BlazeBurnerBlock.HEAT_LEVEL, BlazeBurnerBlock.HeatLevel.KINDLED), false);
+        scene.world().modifyBlock(util.grid().at(3, 3, 3), bs -> bs.setValue(BlazeEnchanterBlock.HEAT_LEVEL, BlazeEnchanterBlock.HeatLevel.KINDLED), false);
         scene.idle(50);
 
         scene.world().showSection(util.select().position(1, 2, 1).add(util.select().position(1, 3, 3)), Direction.DOWN);
@@ -144,7 +145,7 @@ public class ExperienceScene {
                 .attachKeyFrame()
                 .placeNearTarget()
                 .pointAt(util.vector().topOf(1, 2, 1));
-        scene.world().modifyBlock(util.grid().at(1, 3, 3), bs -> bs.setValue(BlazeBurnerBlock.HEAT_LEVEL, BlazeBurnerBlock.HeatLevel.KINDLED), false);
+        scene.world().modifyBlock(util.grid().at(1, 3, 3), bs -> bs.setValue(BlazeForgerBlock.HEAT_LEVEL, BlazeEnchanterBlock.HeatLevel.KINDLED), false);
         scene.idle(50);
 
         scene.overlay().showText(55)
