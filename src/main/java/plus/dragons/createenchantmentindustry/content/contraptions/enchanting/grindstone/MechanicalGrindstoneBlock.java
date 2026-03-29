@@ -109,7 +109,7 @@ public class MechanicalGrindstoneBlock extends RotatedPillarKineticBlock impleme
                 player.getInventory().placeItemBackInInventory(result.output());
             }
             player.setItemInHand(otherHand, result.bottom());
-            player.awardStat(Stats.CUSTOM.get(CeiStats.MECHANICAL_GRINDSTONE_EXPERIENCE), result.experience());
+            player.awardStat(Stats.CUSTOM.get(CeiStats.MECHANICAL_GRINDSTONE_EXPERIENCE.get()), result.experience());
             if (player instanceof ServerPlayer serverPlayer)
                 serverPlayer.giveExperiencePoints(result.experience());
             level.levelEvent(1042, pos, 0);

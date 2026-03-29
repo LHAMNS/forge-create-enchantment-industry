@@ -59,13 +59,13 @@ public class EnchantmentIndustry {
         CeiEntityTypes.register();
         CeiFluids.register();
         CeiItems.register();
-        CeiStats.register();
+        CeiStats.register(modEventBus);
         CeiRecipeTypes.register(modEventBus);
         CeiTags.register();
         CeiCreativeModeTab.register(modEventBus);
         CeiDisplaySources.register();
         CeiMountedStorageTypes.register();
-        CeiArmInteractionPoints.register();
+        CeiArmInteractionPoints.register(modEventBus);
         CeiItemAttributes.register(modEventBus);
         REGISTRATE.registerEventListeners(modEventBus);
     }
