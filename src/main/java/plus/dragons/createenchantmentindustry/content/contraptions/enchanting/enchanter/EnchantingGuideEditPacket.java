@@ -34,6 +34,7 @@ public class EnchantingGuideEditPacket extends SimplePacketBase {
     public boolean handle(Context context) {
         context.enqueueWork(() -> {
                     ServerPlayer sender = context.getSender();
+                    if (sender == null) return;
                     ItemStack mainHandItem = sender.getMainHandItem();
                     if (!CeiItems.ENCHANTING_GUIDE.isIn(mainHandItem))
                         return;

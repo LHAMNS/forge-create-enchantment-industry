@@ -34,10 +34,11 @@ public abstract class LightningBoltMixin extends Entity {
 
     @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LightningBolt;clearCopperOnLightningStrike(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V"))
     private void cei$chargeExperienceOnLightingStrike(CallbackInfo ci) {
+        Level level = this.level();
+        if (level.isClientSide) return;
         if (!this.getPersistentData().getBoolean(cei$LIGHTNING_BOLT_EXPERIENCE_CHARGE_KEY))
             if (this.random.nextFloat() > CeiConfigs.SERVER.regularLightningStrikeTransformXpBlockChance.get())
                 return;
-        Level level = this.level();
         BlockPos pos = this.getStrikePosition();
         BlockState blockstate = level.getBlockState(pos);
         // Check forge:lightning_rods tag instead of only vanilla LightningRodBlock

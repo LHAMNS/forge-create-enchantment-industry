@@ -25,8 +25,9 @@ import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 @Mod.EventBusSubscriber
 public class DeployerExtension {
 
-    @SubscribeEvent(priority = EventPriority.LOWEST)
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = false)
     public static void onLivingExperienceDrop(final LivingExperienceDropEvent event) {
+        if (event.isCanceled()) return;
         if (!(event.getAttackingPlayer() instanceof DeployerFakePlayer deployer))
             return;
         // Scale the XP by the configured multiplier

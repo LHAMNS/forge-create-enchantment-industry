@@ -22,6 +22,7 @@ import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experi
 import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.foundation.advancement.CeiAdvancements;
+import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 
 
 @Mixin(value = OpenEndedPipe.class)
@@ -42,7 +43,7 @@ public class OpenEndedPipeMixin {
 
     @Inject(method = "provideFluidToSpace", at = @At("HEAD"), cancellable = true, remap = false)
     private void inject(FluidStack fluid, boolean simulate, CallbackInfoReturnable<Boolean> cir){
-        if(CeiDataMaps.isXpFluid(fluid)){
+        if(CeiDataMaps.isXpFluid(fluid) && CeiConfigs.SERVER.experienceVaporizeOnPlacement.get()){
             if (world != null && world.isLoaded(this.outputPos) && simulate) {
                 // Simulate: just confirm we can accept this fluid, no side effects
                 cir.setReturnValue(true);
@@ -69,7 +70,8 @@ public class OpenEndedPipeMixin {
                         outputPos.getY() - pos.getY(),
                         outputPos.getZ() - pos.getZ()).scale(0.2);
                 var orbPos = VecHelper.getCenterOf(outputPos);
-                ExperienceFluid expfluid = (ExperienceFluid) fluid.getFluid();
+                ExperienceFluid expfluid = CeiDataMaps.asExperienceFluid(fluid.getFluid());
+                if (expfluid == null) return;
                 int amount = fluid.getAmount();
                 if (players.isEmpty()) {
                     expfluid.awardOrDrop(null, slevel, orbPos, speed, amount);

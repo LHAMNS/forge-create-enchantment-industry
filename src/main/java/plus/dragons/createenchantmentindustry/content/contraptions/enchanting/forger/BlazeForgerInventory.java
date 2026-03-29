@@ -348,12 +348,10 @@ public class BlazeForgerInventory extends ItemStackHandler {
             stacks.set(4, base);
         }
 
-        // Clamp level in non-hyper mode
+        // Clamp level in non-hyper mode to the enchantment's natural max
         if (!forger.hyper()) {
             int maxLevel = EnchantmentLevelUtil.getMaxLevel(enchantment);
-            int extension = CeiDataMaps.getEffectiveSuperEnchantingLevelExtension(
-                    enchantment, CeiConfigs.SERVER.maxHyperEnchantingLevelExtension.get());
-            level = Math.min(level, maxLevel + extension);
+            level = Math.min(level, maxLevel);
         }
 
         // Add the enchantment to the blank template

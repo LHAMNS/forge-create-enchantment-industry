@@ -71,7 +71,7 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
                     ItemStack single = stack.copyWithCount(1);
                     var space = tank.getPrimaryHandler().getSpace();
                     int a = GrindstoneHelper.getExperienceFromItem(single);
-                    int b = GrindstoneHelper.getExperienceFromGrindingRecipe(level, single);
+                    int b = level != null ? GrindstoneHelper.getExperienceFromGrindingRecipe(level, single) : 0;
                     if (a > space || b > space) return stack;
                     ItemStack result = super.insertItem(slot, single, simulate);
                     if (result.isEmpty()) {
@@ -82,7 +82,7 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
                 }
                 var space = tank.getPrimaryHandler().getSpace();
                 int a = GrindstoneHelper.getExperienceFromItem(stack);
-                int b = GrindstoneHelper.getExperienceFromGrindingRecipe(level, stack);
+                int b = level != null ? GrindstoneHelper.getExperienceFromGrindingRecipe(level, stack) : 0;
                 if (a > space || b > space) return stack;
                 return super.insertItem(slot, stack, simulate);
             }
