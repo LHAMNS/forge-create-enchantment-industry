@@ -235,7 +235,7 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
             var recipe = grinding.get();
             var fluidIngredients = recipe.getFluidIngredients();
             var fluidResults = recipe.getFluidResults();
-            boolean applicable = false;
+            boolean applicable = fluidIngredients.isEmpty() && fluidResults.isEmpty();
             if (!fluidIngredients.isEmpty())
                 applicable = drain(fluidIngredients.get(0));
             else if (!fluidResults.isEmpty())

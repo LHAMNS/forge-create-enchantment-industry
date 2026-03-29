@@ -54,8 +54,9 @@ public class ApotheosisCompat {
     public static void banTomeFromEnchanter(){
         if(ModList.get().isLoaded("apotheosis")){
             Enchanting.UNENCHANTABLE_CONDITIONS.add((itemStack)->{
-                var id = itemStack.getItem().toString();
-                return id.startsWith("apotheosis:") && id.contains("tome");
+                var key = net.minecraftforge.registries.ForgeRegistries.ITEMS.getKey(itemStack.getItem());
+                if (key == null) return false;
+                return key.getNamespace().equals("apotheosis") && key.getPath().contains("tome");
             });
         }
     }

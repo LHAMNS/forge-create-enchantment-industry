@@ -11,6 +11,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Overwrite;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
 import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 
@@ -23,8 +24,12 @@ public abstract class SpoutBlockMixin extends Block implements IWrenchable, IBE<
         super(pProperties);
     }
     
+    /**
+     * @author CEI
+     * @reason Drop experience fluid as XP orbs when spout is broken
+     */
     @SuppressWarnings("deprecation")
-    @Override
+    @Overwrite
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.hasBlockEntity() || state.getBlock() == newState.getBlock())
             return;

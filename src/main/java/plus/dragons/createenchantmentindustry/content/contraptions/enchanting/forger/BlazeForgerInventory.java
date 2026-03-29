@@ -562,7 +562,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
     }
 
     boolean forgingCompleted() {
-        return !stacks.get(2).isEmpty() && forger.processingTime == -1;
+        return (!stacks.get(2).isEmpty() || !stacks.get(3).isEmpty()) && forger.processingTime == -1;
     }
 
     boolean notEnoughItemToForge() {

@@ -41,19 +41,15 @@ public class ExperienceFluid extends VirtualFluid {
         while(fluidAmount > 0) {
             int orbSize = ExperienceOrb.getExperienceValue(fluidAmount);
             fluidAmount -= orbSize;
-            if (!ExperienceOrb.tryMergeToExisting(level, pos, orbSize)) {
-                level.addFreshEntity(this.convertToOrb(level, pos.x, pos.y, pos.z, orbSize));
-            }
+            ExperienceOrb.award(level, pos, orbSize);
         }
     }
-    
+
     public void awardOrDrop(@Nullable Player player, ServerLevel level, Vec3 pos, Vec3 speed, int amount) {
         var orb = this.convertToOrb(level, pos.x, pos.y, pos.z, amount);
         if (player == null || MinecraftForge.EVENT_BUS.post(new PlayerXpEvent.PickupXp(player, orb))) {
-            if (!ExperienceOrb.tryMergeToExisting(level, pos, orb.value)) {
-                orb.setDeltaMovement(speed);
-                level.addFreshEntity(orb);
-            }
+            orb.setDeltaMovement(speed);
+            level.addFreshEntity(orb);
         } else {
             int left = orb.repairPlayerItems(player, orb.value);
             if (left > 0) {

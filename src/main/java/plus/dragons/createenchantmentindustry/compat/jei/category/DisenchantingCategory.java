@@ -9,6 +9,7 @@ import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.world.item.ItemStack;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.disenchanter.DisenchantRecipe;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 
@@ -39,7 +40,9 @@ public class DisenchantingCategory extends CreateRecipeCategory<DisenchantRecipe
         if(!recipe.hasNoResult())
             builder.addSlot(RecipeIngredientRole.OUTPUT, 139, 5)
                     .setBackground(getRenderedSlot(), -1, -1)
-                    .addItemStack(recipe.getResultItem(Minecraft.getInstance().level.registryAccess()));
+                    .addItemStack(Minecraft.getInstance().level != null
+                            ? recipe.getResultItem(Minecraft.getInstance().level.registryAccess())
+                            : ItemStack.EMPTY);
     }
 
     @Override

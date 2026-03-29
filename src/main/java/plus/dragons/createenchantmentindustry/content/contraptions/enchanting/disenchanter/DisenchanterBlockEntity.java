@@ -161,7 +161,7 @@ public class DisenchanterBlockEntity extends SmartBlockEntity implements IHaveGo
                     Vec3 outMotion = Vec3.atLowerCornerOf(side.getNormal())
                             .scale(movementSpeed)
                             .add(0, 1 / 8f, 0);
-                    outPos.add(outMotion.normalize());
+                    outPos = outPos.add(outMotion.normalize());
                     ItemEntity entity = new ItemEntity(level, outPos.x, outPos.y + 6 / 16f, outPos.z, ejected);
                     entity.setDeltaMovement(outMotion);
                     entity.setDefaultPickUpDelay();
