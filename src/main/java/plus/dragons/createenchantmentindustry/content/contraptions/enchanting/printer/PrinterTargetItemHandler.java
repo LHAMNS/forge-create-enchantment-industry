@@ -35,7 +35,11 @@ public class PrinterTargetItemHandler implements IItemHandler {
 
     @Override
     public @Nonnull ItemStack extractItem(int slot, int amount, boolean simulate) {
-        var ret = be.getCopyTarget().copy();
+        if (amount <= 0) return ItemStack.EMPTY;
+        var target = be.getCopyTarget();
+        if (target.isEmpty()) return ItemStack.EMPTY;
+        var ret = target.copy();
+        ret.setCount(Math.min(amount, ret.getCount()));
         if(!simulate){
             be.setCopyTarget(ItemStack.EMPTY);
         }

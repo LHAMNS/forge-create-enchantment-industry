@@ -5,6 +5,7 @@ import com.mojang.serialization.codecs.RecordCodecBuilder;
 import com.simibubi.create.api.contraption.storage.fluid.MountedFluidStorageType;
 import com.simibubi.create.api.contraption.storage.fluid.WrapperMountedFluidStorage;
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -18,9 +19,18 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 public class ExperienceLanternMountedStorage extends WrapperMountedFluidStorage<ExperienceLanternMountedStorage.Handler> {
+    /**
+     * FluidStack.CODEC does not exist in Forge 1.20.1.
+     * We build a Codec manually via CompoundTag-based NBT serialization of FluidStack.
+     */
+    private static final Codec<FluidStack> FLUID_STACK_CODEC = CompoundTag.CODEC.xmap(
+            FluidStack::loadFluidStackFromNBT,
+            fluid -> fluid.writeToNBT(new CompoundTag())
+    );
+
     public static final Codec<ExperienceLanternMountedStorage> CODEC = RecordCodecBuilder.create(i -> i.group(
             Codec.INT.fieldOf("capacity").forGetter(ExperienceLanternMountedStorage::getCapacity),
-            FluidStack.CODEC.fieldOf("fluid").forGetter(ExperienceLanternMountedStorage::getFluid)
+            FLUID_STACK_CODEC.fieldOf("fluid").forGetter(ExperienceLanternMountedStorage::getFluid)
     ).apply(i, ExperienceLanternMountedStorage::new));
 
     private boolean dirty;

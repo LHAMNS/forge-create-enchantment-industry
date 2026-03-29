@@ -21,14 +21,13 @@ import java.util.stream.Collectors;
 
 public class Disenchanting {
 
-    private static final RecipeWrapper WRAPPER = new RecipeWrapper(new ItemStackHandler(1));
-
     public static ItemStack disenchantAndInsert(DisenchanterBlockEntity be, ItemStack itemStack, boolean simulate) {
         Level level = be.getLevel();
         if (level == null)
             return itemStack;
-        WRAPPER.setItem(0, itemStack);
-        return CeiRecipeTypes.DISENCHANTING.<RecipeWrapper, DisenchantRecipe>find(WRAPPER, be.getLevel())
+        RecipeWrapper wrapper = new RecipeWrapper(new ItemStackHandler(1));
+        wrapper.setItem(0, itemStack);
+        return CeiRecipeTypes.DISENCHANTING.<RecipeWrapper, DisenchantRecipe>find(wrapper, be.getLevel())
                 .map(recipe -> {
                     if (!recipe.hasNoResult())
                         return itemStack;
@@ -58,8 +57,9 @@ public class Disenchanting {
             ItemStack result = disenchant(itemStack);
             return Pair.of(xp, result);
         }
-        WRAPPER.setItem(0, itemStack);
-        var recipe = CeiRecipeTypes.DISENCHANTING.<RecipeWrapper, DisenchantRecipe>find(WRAPPER, level).orElse(null);
+        RecipeWrapper wrapper = new RecipeWrapper(new ItemStackHandler(1));
+        wrapper.setItem(0, itemStack);
+        var recipe = CeiRecipeTypes.DISENCHANTING.<RecipeWrapper, DisenchantRecipe>find(wrapper, level).orElse(null);
         if (recipe != null && !recipe.hasNoResult()) {
             var xp = new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), recipe.getExperience());
             var result = recipe.getResultItem(level.registryAccess()).copy();

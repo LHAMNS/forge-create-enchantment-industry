@@ -86,6 +86,7 @@ public class DisenchanterBlockEntity extends SmartBlockEntity implements IHaveGo
     @Override
     public void tick() {
         super.tick();
+        if (level == null) return;
 
         boolean onClient = level.isClientSide && !isVirtual();
 
@@ -232,6 +233,7 @@ public class DisenchanterBlockEntity extends SmartBlockEntity implements IHaveGo
                                 inserted -= total;
                                 player.giveExperiencePoints(-total);
                             }
+                            absorbedXp = true;
                             CeiAdvancements.SPIRIT_TAKING.getTrigger().trigger((ServerPlayer) player);
                         } else if (inserted > 0) {
                             if (total >= inserted) {
@@ -387,6 +389,16 @@ public class DisenchanterBlockEntity extends SmartBlockEntity implements IHaveGo
         super.invalidate();
         for (LazyOptional<DisenchanterItemHandler> lazyOptional : itemHandlers.values())
             lazyOptional.invalidate();
+    }
+
+    @Override
+    public void reviveCaps() {
+        super.reviveCaps();
+        itemHandlers = new IdentityHashMap<>();
+        for (Direction d : Iterate.horizontalDirections) {
+            DisenchanterItemHandler disenchanterItemHandler = new DisenchanterItemHandler(this, d);
+            itemHandlers.put(d, LazyOptional.of(() -> disenchanterItemHandler));
+        }
     }
 
     @Override

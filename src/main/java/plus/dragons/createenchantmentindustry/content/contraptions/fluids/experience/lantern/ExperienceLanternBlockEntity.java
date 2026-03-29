@@ -33,12 +33,10 @@ import static net.minecraft.world.level.block.DirectionalBlock.FACING;
 public class ExperienceLanternBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
     protected SmartFluidTankBehaviour tank;
     protected AABB effectiveAABB;
-    protected int rate;
 
     public ExperienceLanternBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
         effectiveAABB = new AABB(getBlockPos()).inflate(0.5);
-        rate = CeiConfigs.SERVER.experienceLanternDrainRate.get();
     }
 
     @Override
@@ -67,6 +65,7 @@ public class ExperienceLanternBlockEntity extends SmartBlockEntity implements IH
     }
 
     protected void drainExp() {
+        int rate = CeiConfigs.SERVER.experienceLanternDrainRate.get();
         List<Player> players = level.getEntitiesOfClass(Player.class, effectiveAABB,
                 player -> player.isAlive() && !player.isSpectator());
         if (!players.isEmpty()) {
@@ -145,7 +144,9 @@ public class ExperienceLanternBlockEntity extends SmartBlockEntity implements IH
         if (!experienceOrbs.isEmpty()) {
             for (var orb : experienceOrbs) {
                 if (orb.getDeltaMovement().length() <= .5) {
-                    var pushForce = pullForceMultiplier / orb.position().distanceTo(getBlockPos().getCenter());
+                    double distance = orb.position().distanceTo(getBlockPos().getCenter());
+                    if (distance < 0.01) continue;
+                    var pushForce = pullForceMultiplier / distance;
                     var directionToLantern = getBlockPos().getCenter().subtract(orb.position())
                             .normalize().multiply(pushForce, pushForce, pushForce);
                     orb.push(directionToLantern.x, directionToLantern.y, directionToLantern.z);
@@ -178,6 +179,11 @@ public class ExperienceLanternBlockEntity extends SmartBlockEntity implements IH
     @Override
     public void invalidate() {
         super.invalidate();
+    }
+
+    @Override
+    public void reviveCaps() {
+        super.reviveCaps();
     }
 
     @Override

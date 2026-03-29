@@ -198,9 +198,11 @@ public class BlazeEnchanterBlock extends HorizontalDirectionalBlock implements I
                     ItemStack heldItemStack = te.getHeldItemStack();
                     if (heldItemStack.isEmpty()) {
                         if (!worldIn.isClientSide) {
-                            te.heldItem = new TransportedItemStack(heldItem);
+                            // Only take one item from the stack to prevent stacked input
+                            ItemStack toInsert = heldItem.copyWithCount(1);
+                            te.heldItem = new TransportedItemStack(toInsert);
                             if(!player.getAbilities().instabuild)
-                                player.setItemInHand(handIn, ItemStack.EMPTY);
+                                heldItem.shrink(1);
                             te.notifyUpdate();
                         }
                         return InteractionResult.SUCCESS;
@@ -250,6 +252,10 @@ public class BlazeEnchanterBlock extends HorizontalDirectionalBlock implements I
         BlockPos pos = context.getClickedPos();
         Player player = context.getPlayer();
         if (world instanceof ServerLevel) {
+            // Drop contents before replacing the block to prevent item loss
+            if (world.getBlockEntity(pos) instanceof BlazeEnchanterBlockEntity be) {
+                be.destroy();
+            }
             if (player != null)
                 player.level().setBlockAndUpdate(pos, AllBlocks.BLAZE_BURNER.getDefaultState()
                         .setValue(BlazeBurnerBlock.FACING, state.getValue(FACING))

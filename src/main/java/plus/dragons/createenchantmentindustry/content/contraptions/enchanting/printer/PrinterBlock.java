@@ -68,6 +68,8 @@ public class PrinterBlock extends Block implements IWrenchable, IBE<PrinterBlock
         if (heldItem.isEmpty()) {
             return onBlockEntityUse(world, pos, be -> {
                 if (!be.getCopyTarget().isEmpty()) {
+                    if (world.isClientSide)
+                        return InteractionResult.SUCCESS;
                     player.setItemInHand(hand, be.getCopyTarget());
                     be.setCopyTarget(ItemStack.EMPTY);
                     return InteractionResult.SUCCESS;
@@ -77,6 +79,8 @@ public class PrinterBlock extends Block implements IWrenchable, IBE<PrinterBlock
         var copy = heldItem.copy();
         copy.setCount(1);
         if(Printing.match(copy)!=null){
+            if (world.isClientSide)
+                return InteractionResult.SUCCESS;
             return onBlockEntityUse(world, pos, be -> {
                 if (!player.getAbilities().instabuild) heldItem.shrink(1);
                 if (!be.getCopyTarget().isEmpty()) {

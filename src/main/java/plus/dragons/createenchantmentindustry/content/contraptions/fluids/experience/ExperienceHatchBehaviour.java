@@ -51,15 +51,21 @@ public class ExperienceHatchBehaviour extends FilteringBehaviour {
             return FluidStack.EMPTY;
         FluidStack filterFluid = filter.fluid(getWorld());
         if (filterFluid.isEmpty()) {
-            // No filter set -> default to experience fluid
+            // No filter set -> default to experience fluid (1:1 ratio)
             int amount = count == 0 ? available : Math.min(available, count * POINTS_PER_SCROLL);
             return new FluidStack(CeiFluids.EXPERIENCE.get(), amount);
         }
         // Convert XP points to mB using the fluid's ratio
+        // 'available' is in XP points, we need to convert to mB for the filtered fluid
+        int availableMb = CeiDataMaps.xpToFluidAmount(filterFluid.getFluid(), available);
+        if (availableMb == 0) availableMb = available; // fallback for unregistered fluids (assume 1:1)
+        if (count == 0) {
+            return new FluidStack(filterFluid.getFluid(), availableMb);
+        }
         int xpPoints = count * POINTS_PER_SCROLL;
-        int mbLimit = count == 0 ? available : CeiDataMaps.xpToFluidAmount(filterFluid.getFluid(), xpPoints);
-        if (mbLimit == 0 && count != 0) mbLimit = xpPoints; // fallback for unregistered fluids
-        int amount = count == 0 ? available : Math.min(available, mbLimit);
+        int mbLimit = CeiDataMaps.xpToFluidAmount(filterFluid.getFluid(), xpPoints);
+        if (mbLimit == 0) mbLimit = xpPoints; // fallback for unregistered fluids
+        int amount = Math.min(availableMb, mbLimit);
         return new FluidStack(filterFluid.getFluid(), amount);
     }
 

@@ -18,6 +18,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.network.NetworkHooks;
@@ -53,8 +54,17 @@ public class EnchantingGuideItem extends Item implements MenuProvider {
                 if (blockState.getBlock() instanceof BlazeBurnerBlock &&
                         blockEntity instanceof BlazeBurnerBlockEntity) {
                     if (!level.isClientSide()) {
+                        BlockState oldState = level.getBlockState(blockPos);
+                        BlazeBurnerBlock.HeatLevel heatLevel = oldState.getValue(BlazeBurnerBlock.HEAT_LEVEL);
+                        BlazeEnchanterBlock.HeatLevel enchanterHeatLevel = switch (heatLevel) {
+                            case SEETHING -> BlazeEnchanterBlock.HeatLevel.SEETHING;
+                            case KINDLED -> BlazeEnchanterBlock.HeatLevel.KINDLED;
+                            case FADING -> BlazeEnchanterBlock.HeatLevel.KINDLED;
+                            default -> BlazeEnchanterBlock.HeatLevel.SMOULDERING;
+                        };
                         level.setBlockAndUpdate(blockPos, CeiBlocks.BLAZE_ENCHANTER.getDefaultState()
-                                .setValue(BlazeEnchanterBlock.FACING, level.getBlockState(blockPos).getValue(BlazeBurnerBlock.FACING))
+                                .setValue(BlazeEnchanterBlock.FACING, oldState.getValue(BlazeBurnerBlock.FACING))
+                                .setValue(BlazeEnchanterBlock.HEAT_LEVEL, enchanterHeatLevel)
                         );
                         if (level.getBlockEntity(blockPos) instanceof BlazeEnchanterBlockEntity tileEntity) {
                             var i = itemStack.copy();

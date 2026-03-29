@@ -71,20 +71,25 @@ public class DeployerExtension {
             return;
         if (!CeiConfigs.SERVER.deployerCollectXp.get())
             return;
-        int total = deployer.totalExperience + event.getAmount();
+        // Only work with the new XP from this event, NOT the deployer's accumulated totalExperience
+        int amount = event.getAmount();
+        if (amount <= 0)
+            return;
         int consumed = 0;
         if (CeiConfigs.SERVER.deployerMendItem.get()) {
             ItemStack heldItem = deployer.getMainHandItem();
             if (MendingByDeployer.canItemBeMended(heldItem)) {
-                MendingByDeployer.mendItem(total, heldItem);
-                consumed = total - MendingByDeployer.getNewXp(total, heldItem);
+                MendingByDeployer.mendItem(amount, heldItem);
+                consumed = amount - MendingByDeployer.getNewXp(amount, heldItem);
             }
         }
-        int remaining = Math.max(0, event.getAmount() - consumed);
+        int remaining = Math.max(0, amount - consumed);
         int nuggets = remaining / 3;
         if (nuggets > 0) {
             deployer.getInventory().placeItemBackInInventory(AllItems.EXP_NUGGET.asStack(nuggets));
         }
-        event.setAmount(Math.max(0, total - consumed - nuggets * 3));
+        // Cancel the event so the deployer doesn't accumulate totalExperience
+        // Only pass through leftover XP that wasn't converted to nuggets
+        event.setAmount(remaining - nuggets * 3);
     }
 }

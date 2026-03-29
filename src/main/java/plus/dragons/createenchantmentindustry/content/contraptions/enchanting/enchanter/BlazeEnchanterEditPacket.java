@@ -39,9 +39,17 @@ public class BlazeEnchanterEditPacket extends SimplePacketBase {
     public boolean handle(Context context) {
         context.enqueueWork(() -> {
                     ServerPlayer sender = context.getSender();
+                    if (sender == null)
+                        return;
                     if (sender.distanceToSqr(Vec3.atCenterOf(blockPos)) > 64)
                         return;
                     if(!(sender.level().getBlockEntity(blockPos) instanceof BlazeEnchanterBlockEntity blazeEnchanter))
+                        return;
+                    // Validate index bounds (must be non-negative)
+                    if (index < 0)
+                        return;
+                    // Validate the item is an enchanted book (only enchanted books should be set as targets)
+                    if (!itemStack.isEmpty() && !net.minecraft.world.item.Items.ENCHANTED_BOOK.equals(itemStack.getItem()))
                         return;
 
                     CompoundTag tag = blazeEnchanter.targetItem.getOrCreateTag();

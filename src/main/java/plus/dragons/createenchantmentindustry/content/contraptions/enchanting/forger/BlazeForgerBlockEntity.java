@@ -113,6 +113,7 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
     @Override
     public void tick() {
         super.tick();
+        if (level == null) return;
 
         boolean onClient = level.isClientSide && !isVirtual();
 
@@ -160,7 +161,6 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
             }
             if (processingTime > 0) {
                 processingTime--;
-                notifyUpdate();
                 return;
             }
             // Lightning strike check in hyper mode
@@ -423,6 +423,11 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
     @Override
     public void invalidate() {
         super.invalidate();
+    }
+
+    @Override
+    public void reviveCaps() {
+        super.reviveCaps();
     }
 
     @Override

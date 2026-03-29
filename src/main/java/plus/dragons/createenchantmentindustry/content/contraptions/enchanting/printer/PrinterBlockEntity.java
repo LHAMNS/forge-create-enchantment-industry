@@ -141,7 +141,7 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
                                                                       TransportedItemStackHandlerBehaviour handler) {
         if (handler.blockEntity.isVirtual())
             return PASS;
-        if (tooExpensive || copyTarget == null)
+        if (tooExpensive || copyTarget == null || printEntry == null)
             return PASS;
         if (!Printing.valid(printEntry,copyTarget,transported.stack))
             return PASS;
@@ -154,18 +154,25 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
 
     protected BeltProcessingBehaviour.ProcessingResult whenItemHeld(TransportedItemStack transported,
                                                                     TransportedItemStackHandlerBehaviour handler) {
-        if (processingTicks != -1 && processingTicks != 10)
+        if (processingTicks > 0)
             return HOLD;
-        if (tooExpensive || copyTarget == null)
+        // Re-validate conditions when processing is ready (ticks <= 0) or not started (-1)
+        if (tooExpensive || copyTarget == null || printEntry == null) {
+            processingTicks = -1;
             return PASS;
-        if (!Printing.valid(printEntry, copyTarget,transported.stack))
+        }
+        if (!Printing.valid(printEntry, copyTarget,transported.stack)) {
+            processingTicks = -1;
             return PASS;
+        }
         if (tank.isEmpty() || !Printing.isCorrectInk(printEntry, getCurrentFluidInTank(), copyTarget))
             return HOLD;
         FluidStack fluid = getCurrentFluidInTank();
         int requiredAmountForItem = Printing.getRequiredAmountForItem(printEntry, copyTarget);
-        if (requiredAmountForItem == -1)
+        if (requiredAmountForItem == -1) {
+            processingTicks = -1;
             return PASS;
+        }
         if (requiredAmountForItem > fluid.getAmount())
             return HOLD;
 
@@ -275,6 +282,12 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     }
 
     @Override
+    public void reviveCaps() {
+        super.reviveCaps();
+        this.itemHandler = LazyOptional.of(() -> new PrinterTargetItemHandler(this));
+    }
+
+    @Override
     @Nonnull
     public <T> LazyOptional<T> getCapability(Capability<T> cap, @Nullable Direction side) {
         if (cap == ForgeCapabilities.FLUID_HANDLER && side != Direction.DOWN)
@@ -293,7 +306,7 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         LANG.translate("gui.goggles.printer").forGoggles(tooltip);
-        if (copyTarget == null) {
+        if (copyTarget == null || printEntry == null) {
             LANG.translate("gui.goggles.printer.no_target")
                     .style(ChatFormatting.GRAY)
                     .forGoggles(tooltip, 1);

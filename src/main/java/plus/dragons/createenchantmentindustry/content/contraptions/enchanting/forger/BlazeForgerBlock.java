@@ -160,22 +160,28 @@ public class BlazeForgerBlock extends HorizontalDirectionalBlock implements IWre
 
         return onBlockEntityUse(worldIn, pos, be -> {
             if (!heldItem.isEmpty()) {
-                // Try inserting item
-                ItemStack remainder = be.insertItem(heldItem, false);
-                if (remainder.getCount() != heldItem.getCount() || !ItemStack.isSameItemSameTags(remainder, heldItem)) {
+                // Try inserting item - simulate first to check validity on both sides
+                ItemStack simRemainder = be.insertItem(heldItem, true);
+                if (simRemainder.getCount() == heldItem.getCount() && ItemStack.isSameItemSameTags(simRemainder, heldItem)) {
+                    return InteractionResult.PASS;
+                }
+                if (!worldIn.isClientSide) {
+                    ItemStack remainder = be.insertItem(heldItem, false);
                     if (!player.getAbilities().instabuild)
                         player.setItemInHand(handIn, remainder);
-                    return InteractionResult.SUCCESS;
                 }
-                return InteractionResult.PASS;
+                return InteractionResult.sidedSuccess(worldIn.isClientSide);
             } else {
                 // Try extracting item
-                ItemStack extracted = be.extractItem(false);
-                if (!extracted.isEmpty()) {
-                    player.getInventory().placeItemBackInInventory(extracted);
-                    return InteractionResult.SUCCESS;
+                ItemStack simExtracted = be.extractItem(true);
+                if (simExtracted.isEmpty()) {
+                    return InteractionResult.PASS;
                 }
-                return InteractionResult.PASS;
+                if (!worldIn.isClientSide) {
+                    ItemStack extracted = be.extractItem(false);
+                    player.getInventory().placeItemBackInInventory(extracted);
+                }
+                return InteractionResult.sidedSuccess(worldIn.isClientSide);
             }
         });
     }
@@ -186,6 +192,10 @@ public class BlazeForgerBlock extends HorizontalDirectionalBlock implements IWre
         BlockPos pos = context.getClickedPos();
         Player player = context.getPlayer();
         if (world instanceof ServerLevel) {
+            // Drop contents before replacing the block to prevent item loss
+            if (world.getBlockEntity(pos) instanceof BlazeForgerBlockEntity be) {
+                be.destroy();
+            }
             if (player != null)
                 player.level().setBlockAndUpdate(pos, AllBlocks.BLAZE_BURNER.getDefaultState()
                         .setValue(BlazeBurnerBlock.FACING, state.getValue(FACING))

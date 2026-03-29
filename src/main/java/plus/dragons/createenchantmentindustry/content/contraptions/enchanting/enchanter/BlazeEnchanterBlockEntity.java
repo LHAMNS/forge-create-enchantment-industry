@@ -191,6 +191,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     @Override
     public void tick() {
         super.tick();
+        if (level == null) return;
 
         boolean onClient = level.isClientSide && !isVirtual();
 
@@ -550,6 +551,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
 
     public void setTargetItem(ItemStack itemStack) {
         targetItem = itemStack;
+        setChanged();
     }
 
     /**
@@ -651,6 +653,16 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         super.invalidate();
         for (LazyOptional<EnchantingItemHandler> lazyOptional : itemHandlers.values())
             lazyOptional.invalidate();
+    }
+
+    @Override
+    public void reviveCaps() {
+        super.reviveCaps();
+        itemHandlers = new IdentityHashMap<>();
+        for (Direction d : Iterate.horizontalDirections) {
+            EnchantingItemHandler enchantingItemHandler = new EnchantingItemHandler(this, d);
+            itemHandlers.put(d, LazyOptional.of(() -> enchantingItemHandler));
+        }
     }
 
     @Override

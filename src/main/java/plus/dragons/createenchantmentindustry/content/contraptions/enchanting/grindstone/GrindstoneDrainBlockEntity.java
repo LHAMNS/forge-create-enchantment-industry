@@ -33,7 +33,6 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
-import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.fluids.capability.IFluidHandler.FluidAction;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.wrapper.RecipeWrapper;
@@ -59,16 +58,28 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
     private ItemStack processedItem = ItemStack.EMPTY;
     protected SmartFluidTankBehaviour tank;
     private DirectBeltInputBehaviour beltInput;
-    private AdvancementBehaviour advancement;
 
     private LazyOptional<IItemHandler> itemCapability;
-    private LazyOptional<IFluidHandler> fluidCapability;
 
     public GrindstoneDrainBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
         inventory = new ProcessingInventory(this::start) {
             @Override
             public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
+                // Force single-item processing to prevent stacked input issues
+                if (stack.getCount() > 1) {
+                    ItemStack single = stack.copyWithCount(1);
+                    var space = tank.getPrimaryHandler().getSpace();
+                    int a = GrindstoneHelper.getExperienceFromItem(single);
+                    int b = GrindstoneHelper.getExperienceFromGrindingRecipe(level, single);
+                    if (a > space || b > space) return stack;
+                    ItemStack result = super.insertItem(slot, single, simulate);
+                    if (result.isEmpty()) {
+                        // Successfully inserted 1, return the rest
+                        return stack.copyWithCount(stack.getCount() - 1);
+                    }
+                    return stack;
+                }
                 var space = tank.getPrimaryHandler().getSpace();
                 int a = GrindstoneHelper.getExperienceFromItem(stack);
                 int b = GrindstoneHelper.getExperienceFromGrindingRecipe(level, stack);
@@ -96,7 +107,7 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
         super.addBehaviours(behaviours);
         tank = SmartFluidTankBehaviour.single(this, CeiConfigs.SERVER.mechanicalGrindstoneTankCapacity.get());
         beltInput = new DirectBeltInputBehaviour(this).allowingBeltFunnels();
-        advancement = new AdvancementBehaviour(this);
+        var advancement = new AdvancementBehaviour(this);
         behaviours.add(tank);
         behaviours.add(beltInput);
         behaviours.add(advancement);
@@ -124,6 +135,12 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
         itemCapability.invalidate();
     }
 
+    @Override
+    public void reviveCaps() {
+        super.reviveCaps();
+        itemCapability = LazyOptional.of(() -> inventory);
+    }
+
     private Direction getOutputSide() {
         var facing = getBlockState().getValue(HorizontalKineticBlock.HORIZONTAL_FACING);
         var speed = facing == Direction.WEST || facing == Direction.NORTH ? getSpeed() * -1 : getSpeed();
@@ -131,7 +148,7 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
     }
 
     public float getRelativeSpeed() {
-        assert level != null;
+        if (level == null) return 0f;
         float speed = getSpeed();
         if (speed == 0f)
             return 0f;
@@ -152,10 +169,10 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
     }
 
     private int getProcessDuration(ItemStack inputStack) {
-        assert level != null;
+        if (level == null) return 10;
         var recipeManager = level.getRecipeManager();
         RecipeWrapper wrapper = createWrapper(inputStack);
-        var sizeModifier = Math.max(1, (inputStack.getCount() / 5));
+        var sizeModifier = Math.max(1, Mth.ceil(inputStack.getCount() / 5.0f));
         var grinding = recipeManager.getRecipeFor(CeiRecipeTypes.GRINDING.getType(), wrapper, level);
         if (grinding.isPresent() && grinding.get() instanceof GrindingRecipe grindingRecipe) {
             return grindingRecipe.getProcessingDuration() * sizeModifier;
@@ -195,7 +212,7 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
     }
 
     private void start(ItemStack inputStack) {
-        assert level != null;
+        if (level == null) return;
         if (inventory.isEmpty())
             return;
         if (level.isClientSide && !isVirtual())
@@ -206,7 +223,7 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
     }
 
     private void applyRecipe() {
-        assert level != null;
+        if (level == null) return;
         var recipeManager = level.getRecipeManager();
         var inputStack = inventory.getStackInSlot(0);
         RecipeWrapper wrapper = createWrapper(inputStack);
@@ -253,9 +270,9 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
                 // Track grinding stats
                 awardGrindingStat(result.experience());
                 inventory.clear();
-                inventory.setStackInSlot(0, result.top());
-                inventory.setStackInSlot(1, result.bottom());
-                inventory.setStackInSlot(2, result.output());
+                inventory.setStackInSlot(1, result.top());
+                inventory.setStackInSlot(2, result.bottom());
+                inventory.setStackInSlot(3, result.output());
             }
         }
     }
@@ -279,7 +296,7 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
     }
 
     private void spawnProcessedParticles(ItemStack stack) {
-        assert level != null;
+        if (level == null) return;
         if (stack.isEmpty())
             return;
 
@@ -292,12 +309,12 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
         Vec3 pos = Vec3.atBottomCenterOf(this.worldPosition).add(0, 1, 0);
         for (int i = 0; i < 10; i++) {
             Vec3 motion = VecHelper.offsetRandomly(new Vec3(0, 0.25f, 0), level.random, .125f);
-            level.addParticle(particleData, pos.x, pos.y, pos.z, motion.x, motion.y, motion.y);
+            level.addParticle(particleData, pos.x, pos.y, pos.z, motion.x, motion.y, motion.z);
         }
     }
 
     private void spawnProcessingParticles(ItemStack stack) {
-        assert level != null;
+        if (level == null) return;
         if (stack.isEmpty())
             return;
 
@@ -347,14 +364,16 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
     @Override
     public void destroy() {
         super.destroy();
-        Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), processedItem);
-        Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), inventory.extractItem(3000, 64, false));
+        if (level != null && !level.isClientSide) {
+            Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), processedItem);
+            Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), inventory.extractItem(3000, 64, false));
+        }
     }
 
     @Override
     @OnlyIn(Dist.CLIENT)
     public void tickAudio() {
-        assert level != null;
+        if (level == null) return;
         super.tickAudio();
         if (getSpeed() == 0)
             return;
@@ -368,7 +387,7 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
 
     @Override
     public void tick() {
-        assert level != null;
+        if (level == null) return;
         super.tick();
 
         float processingSpeed = getRelativeSpeed();
@@ -438,6 +457,18 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
                 changed = true;
             }
             if (changed) {
+                // Check if all items have been output
+                boolean allEmpty = true;
+                for (int slot2 = 0; slot2 < inventory.getSlots(); slot2++) {
+                    if (!inventory.getStackInSlot(slot2).isEmpty()) {
+                        allEmpty = false;
+                        break;
+                    }
+                }
+                if (allEmpty) {
+                    inventory.remainingTime = -1;
+                    inventory.appliedRecipe = false;
+                }
                 setChanged();
                 sendData();
             }
@@ -456,6 +487,7 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
             level.addFreshEntity(entityIn);
         }
         inventory.clear();
+        inventory.appliedRecipe = false;
         level.updateNeighbourForOutputSignal(worldPosition, getBlockState().getBlock());
         inventory.remainingTime = -1;
         sendData();

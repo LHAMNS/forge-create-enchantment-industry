@@ -3,6 +3,7 @@ package plus.dragons.createenchantmentindustry.content.contraptions.enchanting.e
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.EnchantmentLevelUtil;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.Enchanting;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.EnchantingTemplateItem;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.EnchantmentEntry;
@@ -103,7 +104,7 @@ public class TemplateEnchantingBehaviour extends EnchantingBehaviour {
                     continue;
             }
             if (enchantment.canEnchant(templateTarget) || enchantment.category.canEnchant(templateTarget.getItem())) {
-                int maxLevel = enchantment.getMaxLevel();
+                int maxLevel = EnchantmentLevelUtil.getMaxLevel(enchantment);
                 // In hyper mode, we can go 1 level higher
                 if (hyper) maxLevel++;
                 for (int level = maxLevel; level >= enchantment.getMinLevel(); level--) {

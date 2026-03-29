@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.IntegerProperty;
+import net.minecraft.core.Direction;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import plus.dragons.createenchantmentindustry.entry.CeiBlockEntities;
@@ -18,8 +19,13 @@ import plus.dragons.createenchantmentindustry.entry.CeiBlockEntities;
 public class ExperienceLanternBlock extends WrenchableDirectionalBlock implements IBE<ExperienceLanternBlockEntity> {
     public static final IntegerProperty LIGHT = IntegerProperty.create("light", 0, 15);
 
-    // Shape: base plate + center column
-    private static final VoxelShape SHAPE_DOWN = Block.box(1, 0, 1, 15, 4, 15);
+    // Directional shapes for the lantern
+    private static final VoxelShape SHAPE_DOWN  = Block.box(1, 0, 1, 15, 4, 15);
+    private static final VoxelShape SHAPE_UP    = Block.box(1, 12, 1, 15, 16, 15);
+    private static final VoxelShape SHAPE_NORTH = Block.box(1, 1, 0, 15, 15, 4);
+    private static final VoxelShape SHAPE_SOUTH = Block.box(1, 1, 12, 15, 15, 16);
+    private static final VoxelShape SHAPE_WEST  = Block.box(0, 1, 1, 4, 15, 15);
+    private static final VoxelShape SHAPE_EAST  = Block.box(12, 1, 1, 16, 15, 15);
 
     public ExperienceLanternBlock(Properties properties) {
         super(properties);
@@ -54,8 +60,14 @@ public class ExperienceLanternBlock extends WrenchableDirectionalBlock implement
 
     @Override
     public VoxelShape getShape(BlockState pState, BlockGetter pLevel, BlockPos pPos, CollisionContext pContext) {
-        // Use a simple shape; a proper VoxelShaper would need CEIShapes setup
-        return SHAPE_DOWN;
+        return switch (pState.getValue(FACING)) {
+            case UP -> SHAPE_UP;
+            case NORTH -> SHAPE_NORTH;
+            case SOUTH -> SHAPE_SOUTH;
+            case WEST -> SHAPE_WEST;
+            case EAST -> SHAPE_EAST;
+            default -> SHAPE_DOWN;
+        };
     }
 
     @Override

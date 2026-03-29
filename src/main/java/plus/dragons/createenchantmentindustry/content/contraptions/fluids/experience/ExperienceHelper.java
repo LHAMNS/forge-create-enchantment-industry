@@ -22,10 +22,10 @@ public class ExperienceHelper {
     public static int getExperienceForTotalLevel(int level) {
         if (level == 0)
             return 0;
-        if (level >= 31)
+        if (level >= 32)
             return (9 * level * level - 325 * level) / 2 + 2220;
-        if (level >= 16)
-            return (5 * level * level - 91 * level) / 2 + 360;
+        if (level >= 17)
+            return (5 * level * level - 81 * level) / 2 + 360;
         return level * level + 6 * level;
     }
 
