@@ -5,11 +5,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.fluids.FluidStack;
 import plus.dragons.createenchantmentindustry.EnchantmentIndustry;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 
@@ -20,10 +21,14 @@ import static plus.dragons.createenchantmentindustry.EnchantmentIndustry.LANG;
 /**
  * Custom Name Printing - prints a name tag's custom name onto any item.
  * <p>
- * Upgraded from the existing NameTag entry with support for dye color styling.
- * When a dye-colored fluid is used, the custom name can be styled with that color.
+ * Ported from 1.21.1 CustomNamePrintingBehaviour with full dye color styling support.
+ * When a fluid with a registered style (via {@link CeiDataMaps#registerCustomNameStyle})
+ * is used, the custom name will be styled with that color. Experience fluid prints
+ * the name without additional color styling.
  * <p>
- * Ported from 1.21.1 CustomNamePrintingBehaviour. Uses 1.20.1's Component/Style API.
+ * The fluid-to-style and fluid-to-cost mappings are managed by CeiDataMaps,
+ * equivalent to the upstream's NeoForge DataMaps (PRINTING_CUSTOM_NAME_INGREDIENT
+ * and PRINTING_CUSTOM_NAME_STYLE).
  */
 public class CustomNamePrintEntry implements PrintEntry {
 
@@ -61,10 +66,31 @@ public class CustomNamePrintEntry implements PrintEntry {
     }
 
     @Override
+    public boolean acceptsFluid(FluidStack fluidStack, ItemStack target) {
+        // Accept any fluid that is registered as a custom name ink
+        return CeiDataMaps.isCustomNameInk(fluidStack.getFluid());
+    }
+
+    @Override
     public ItemStack print(ItemStack target, ItemStack material) {
+        // Fallback without fluid info - just copy the name
         ItemStack result = material.copy();
         Component name = target.getHoverName();
-        // Apply the custom name with styling preserved
+        result.setHoverName(name);
+        return result;
+    }
+
+    @Override
+    public ItemStack print(ItemStack target, ItemStack material, FluidStack fluid) {
+        ItemStack result = material.copy();
+        MutableComponent name = target.getHoverName().copy();
+
+        // Apply style from the fluid if one is registered
+        Style fluidStyle = CeiDataMaps.getCustomNameStyle(fluid.getFluid());
+        if (fluidStyle != null) {
+            name.withStyle(fluidStyle);
+        }
+
         result.setHoverName(name);
         return result;
     }

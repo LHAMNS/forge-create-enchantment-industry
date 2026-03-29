@@ -222,8 +222,10 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
                 applicable = fill(fluidResults.get(0));
             if (applicable) {
                 if (!fluidResults.isEmpty() && fluidResults.get(0).getFluid().isSame(CeiFluids.EXPERIENCE.get().getSource())) {
-                    // Award stat for experience gained
-                    // advancement.awardStat is not available in 1.20.1, so we skip stat tracking for automated grinding
+                    // Upstream (1.21.1) tracks grinding stats via advancement.awardStat(CEIStats.GRIND, amount).
+                    // The CEIStats custom stat system is not ported to this Forge build because Forge 1.20.1
+                    // uses a different custom stat registration API. The grinding functionality itself works
+                    // identically - only the stat tracking for advancements is omitted.
                 }
                 inventory.clear();
                 var grinded = recipe.rollResults();

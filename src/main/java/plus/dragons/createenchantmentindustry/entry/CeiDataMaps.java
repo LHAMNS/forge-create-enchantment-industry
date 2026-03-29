@@ -1,5 +1,7 @@
 package plus.dragons.createenchantmentindustry.entry;
 
+import net.minecraft.network.chat.Style;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.fluids.FluidStack;
 import plus.dragons.createenchantmentindustry.EnchantmentIndustry;
@@ -37,6 +39,16 @@ public class CeiDataMaps {
     // ── Splitting Cost Multiplier ───────────────────────────────────────
     private static double splittingCostMultiplier = 1.0;
 
+    // ── Custom Name Printing: Fluid -> ink amount required ──────────────
+    // Maps a Fluid to the amount of fluid required for custom name printing.
+    // Equivalent to upstream's PRINTING_CUSTOM_NAME_INGREDIENT DataMap.
+    private static final Map<Fluid, Integer> CUSTOM_NAME_INK_AMOUNT = new LinkedHashMap<>();
+
+    // ── Custom Name Printing: Fluid -> text style ───────────────────────
+    // Maps a Fluid to the Style to apply to the printed custom name.
+    // Equivalent to upstream's PRINTING_CUSTOM_NAME_STYLE DataMap.
+    private static final Map<Fluid, Style> CUSTOM_NAME_STYLE = new LinkedHashMap<>();
+
     /**
      * Called during mod initialization to register the default CEI fluids.
      * Must be called after CeiFluids.register().
@@ -51,7 +63,12 @@ public class CeiDataMaps {
         registerXpFluid(CeiFluids.EXPERIENCE.get(), 1);
         registerXpFluid(CeiFluids.HYPER_EXPERIENCE.get(), 10);
 
-        EnchantmentIndustry.LOGGER.debug("CeiDataMaps: Registered default XP fluids");
+        // Register experience fluid as a valid custom name printing ink
+        // Upstream uses DataMaps: experience=10mB, dye fluids=250mB
+        registerCustomNameInk(CeiFluids.EXPERIENCE.get().getSource(), 10);
+        registerCustomNameInk(CeiFluids.EXPERIENCE.get(), 10);
+
+        EnchantmentIndustry.LOGGER.debug("CeiDataMaps: Registered default XP fluids and custom name inks");
     }
 
     // ── Public API ──────────────────────────────────────────────────────
@@ -158,5 +175,70 @@ public class CeiDataMaps {
 
     public static double getSplittingCostMultiplier() {
         return splittingCostMultiplier;
+    }
+
+    // ── Custom Name Ink ─────────────────────────────────────────────────
+
+    /**
+     * Register a fluid as a valid ink for custom name printing, with the required amount.
+     * Equivalent to upstream's PRINTING_CUSTOM_NAME_INGREDIENT DataMap.
+     *
+     * @param fluid  the fluid to register
+     * @param amount mB required per custom name print
+     */
+    public static void registerCustomNameInk(Fluid fluid, int amount) {
+        CUSTOM_NAME_INK_AMOUNT.put(fluid, amount);
+    }
+
+    /**
+     * Get the ink amount required for custom name printing with a given fluid.
+     * Returns 0 if the fluid is not registered for custom name printing.
+     */
+    public static int getCustomNameInkAmount(Fluid fluid) {
+        return CUSTOM_NAME_INK_AMOUNT.getOrDefault(fluid, 0);
+    }
+
+    /**
+     * Check if a fluid is valid for custom name printing.
+     */
+    public static boolean isCustomNameInk(Fluid fluid) {
+        return CUSTOM_NAME_INK_AMOUNT.containsKey(fluid);
+    }
+
+    /**
+     * Returns an unmodifiable view of all custom name ink fluids.
+     */
+    public static Map<Fluid, Integer> getAllCustomNameInks() {
+        return Collections.unmodifiableMap(CUSTOM_NAME_INK_AMOUNT);
+    }
+
+    // ── Custom Name Style ───────────────────────────────────────────────
+
+    /**
+     * Register a fluid-to-style mapping for custom name printing.
+     * When this fluid is used, the custom name will be styled with the given Style.
+     * Equivalent to upstream's PRINTING_CUSTOM_NAME_STYLE DataMap.
+     *
+     * @param fluid the fluid
+     * @param style the Style to apply (e.g., Style.EMPTY.withColor(DyeColor.RED.getTextColor()))
+     */
+    public static void registerCustomNameStyle(Fluid fluid, Style style) {
+        CUSTOM_NAME_STYLE.put(fluid, style);
+    }
+
+    /**
+     * Get the Style associated with a fluid for custom name printing.
+     * Returns null if no style is registered for this fluid.
+     */
+    @Nullable
+    public static Style getCustomNameStyle(Fluid fluid) {
+        return CUSTOM_NAME_STYLE.get(fluid);
+    }
+
+    /**
+     * Returns an unmodifiable view of all custom name style mappings.
+     */
+    public static Map<Fluid, Style> getAllCustomNameStyles() {
+        return Collections.unmodifiableMap(CUSTOM_NAME_STYLE);
     }
 }

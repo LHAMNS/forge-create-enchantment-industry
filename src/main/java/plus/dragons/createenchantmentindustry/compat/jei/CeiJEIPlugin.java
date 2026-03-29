@@ -1,5 +1,6 @@
 package plus.dragons.createenchantmentindustry.compat.jei;
 
+import com.simibubi.create.AllRecipeTypes;
 import com.simibubi.create.compat.jei.category.CreateRecipeCategory;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -11,6 +12,7 @@ import mezz.jei.api.registration.IRecipeRegistration;
 import mezz.jei.api.runtime.IIngredientManager;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.MethodsReturnNonnullByDefault;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraftforge.fluids.FluidStack;
@@ -30,6 +32,8 @@ import plus.dragons.createenchantmentindustry.entry.CeiRecipeTypes;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 @MethodsReturnNonnullByDefault
 @ParametersAreNonnullByDefault
@@ -94,6 +98,21 @@ public class CeiJEIPlugin implements IModPlugin {
         allCategories.add(
                 builder(GrindingRecipe.class)
                         .addTypedRecipes(CeiRecipeTypes.GRINDING)
+                        .addRecipes(() -> {
+                            // Add sandpaper polishing recipes as grinding recipes
+                            // The mechanical grindstone can do everything sandpaper can
+                            var level = Minecraft.getInstance().level;
+                            if (level == null) return List.of();
+                            @SuppressWarnings("unchecked")
+                            var polishingType = (net.minecraft.world.item.crafting.RecipeType<com.simibubi.create.content.equipment.sandPaper.SandPaperPolishingRecipe>)
+                                    AllRecipeTypes.SANDPAPER_POLISHING.getType();
+                            return level.getRecipeManager()
+                                    .getAllRecipesFor(polishingType)
+                                    .stream()
+                                    .map(GrindingRecipe::fromPolishing)
+                                    .flatMap(Optional::stream)
+                                    .collect(Collectors.toList());
+                        })
                         .catalyst(CeiBlocks.MECHANICAL_GRINDSTONE::get)
                         .emptyBackground(177, 70)
                         .build("grinding", GrindingCategory::new)

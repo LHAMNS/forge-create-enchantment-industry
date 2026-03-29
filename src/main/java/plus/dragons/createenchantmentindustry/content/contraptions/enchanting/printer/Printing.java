@@ -24,15 +24,16 @@ public class Printing {
     
     @SuppressWarnings("deprecation") //Fluid Tags are still useful for mod interaction
     public static boolean isCorrectInk(PrintEntry printEntry, FluidStack fluidStack, ItemStack target) {
-        return fluidStack.getFluid().isSame(printEntry.requiredInkType(target));
+        return printEntry.acceptsFluid(fluidStack, target);
     }
 
     public static ItemStack print(PrintEntry printEntry, ItemStack target, int requiredAmount, ItemStack stack, FluidStack availableFluid) {
         var copy = stack.copy();
         copy.setCount(1);
         stack.shrink(1);
+        var fluidBeforeShrink = availableFluid.copy();
         availableFluid.shrink(requiredAmount);
-        return printEntry.print(target,copy);
+        return printEntry.print(target, copy, fluidBeforeShrink);
     }
 
     public static boolean isTooExpensive(PrintEntry printEntry, ItemStack target, int limit) {

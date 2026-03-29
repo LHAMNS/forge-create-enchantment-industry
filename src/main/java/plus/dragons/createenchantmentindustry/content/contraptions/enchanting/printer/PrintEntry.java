@@ -5,6 +5,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
+import net.minecraftforge.fluids.FluidStack;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 
 import java.util.List;
@@ -25,6 +26,28 @@ public interface PrintEntry {
 
     default ItemStack print(ItemStack target, ItemStack material){
         return target.copy();
+    }
+
+    /**
+     * Fluid-aware print method. Override this to apply styling based on the fluid used.
+     * The default implementation delegates to {@link #print(ItemStack, ItemStack)}.
+     *
+     * @param target   the item being used as the print source (e.g., name tag)
+     * @param material the item being printed onto
+     * @param fluid    the fluid currently in the printer's tank
+     * @return the printed result item
+     */
+    default ItemStack print(ItemStack target, ItemStack material, FluidStack fluid) {
+        return print(target, material);
+    }
+
+    /**
+     * Check if this entry accepts the given fluid for printing.
+     * The default checks if the fluid matches {@link #requiredInkType(ItemStack)}.
+     * Override to accept multiple fluid types (e.g., experience OR dye fluids).
+     */
+    default boolean acceptsFluid(FluidStack fluidStack, ItemStack target) {
+        return fluidStack.getFluid().isSame(requiredInkType(target));
     }
 
     boolean isTooExpensive(ItemStack target, int limit);

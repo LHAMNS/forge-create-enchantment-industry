@@ -82,12 +82,6 @@ public class PrintingRecipe extends ProcessingRecipe<Container> implements IAsse
 
     @Override
     public Supplier<Supplier<com.simibubi.create.compat.jei.category.sequencedAssembly.SequencedAssemblySubCategory>> getJEISubCategory() {
-        return () -> () -> new com.simibubi.create.compat.jei.category.sequencedAssembly.SequencedAssemblySubCategory(25) {
-            @Override
-            public void setRecipe(mezz.jei.api.gui.builder.IRecipeLayoutBuilder builder, com.simibubi.create.content.processing.sequenced.SequencedRecipe<?> recipe, mezz.jei.api.recipe.IFocusGroup focuses, int x) {}
-
-            @Override
-            public void draw(com.simibubi.create.content.processing.sequenced.SequencedRecipe<?> recipe, net.minecraft.client.gui.GuiGraphics graphics, double mouseX, double mouseY, int x) {}
-        };
+        return () -> plus.dragons.createenchantmentindustry.compat.jei.category.AssemblyPrintingCategory::new;
     }
 }

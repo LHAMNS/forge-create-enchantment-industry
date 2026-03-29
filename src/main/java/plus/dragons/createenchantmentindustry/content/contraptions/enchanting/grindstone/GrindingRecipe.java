@@ -8,12 +8,14 @@ import com.simibubi.create.content.processing.recipe.ProcessingRecipe;
 import com.simibubi.create.content.processing.recipe.ProcessingRecipeBuilder;
 import com.simibubi.create.content.processing.sequenced.IAssemblyRecipe;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.items.wrapper.RecipeWrapper;
+import plus.dragons.createenchantmentindustry.compat.jei.category.AssemblyGrindingCategory;
 import plus.dragons.createenchantmentindustry.entry.CeiBlocks;
 import plus.dragons.createenchantmentindustry.entry.CeiRecipeTypes;
 
@@ -79,19 +81,25 @@ public class GrindingRecipe extends ProcessingRecipe<RecipeWrapper> implements I
 
     @Override
     public Supplier<Supplier<SequencedAssemblySubCategory>> getJEISubCategory() {
-        // TODO: Implement AssemblyGrindingCategory if JEI integration is needed
-        return () -> () -> new SequencedAssemblySubCategory(25) {
-            @Override
-            public void draw(com.simibubi.create.content.processing.sequenced.SequencedRecipe<?> recipe, net.minecraft.client.gui.GuiGraphics graphics, double mouseX, double mouseY, int index) {
-                // Placeholder - override with actual rendering when JEI category is implemented
-            }
-        };
+        return () -> AssemblyGrindingCategory::new;
     }
 
+    /**
+     * Convert a SandPaperPolishingRecipe to a GrindingRecipe for JEI display.
+     * The mechanical grindstone can perform all automatable sandpaper polishing recipes.
+     */
     public static Optional<GrindingRecipe> fromPolishing(SandPaperPolishingRecipe recipe) {
         if (AllRecipeTypes.CAN_BE_AUTOMATED.test(recipe)) {
-            // The conversion from polishing to grinding can be done at JEI integration level
-            return Optional.empty();
+            ResourceLocation id = recipe.getId();
+            ResourceLocation grindingId = new ResourceLocation(id.getNamespace(), id.getPath() + "_using_grindstone");
+            var builder = new ProcessingRecipeBuilder<>(GrindingRecipe::new, grindingId);
+            if (!recipe.getIngredients().isEmpty()) {
+                builder.require(recipe.getIngredients().get(0));
+            }
+            if (!recipe.getRollableResults().isEmpty()) {
+                builder.output(recipe.getRollableResults().get(0));
+            }
+            return Optional.of(builder.build());
         }
         return Optional.empty();
     }

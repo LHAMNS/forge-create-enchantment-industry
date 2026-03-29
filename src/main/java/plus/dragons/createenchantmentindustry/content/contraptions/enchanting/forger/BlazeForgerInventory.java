@@ -1,19 +1,24 @@
 package plus.dragons.createenchantmentindustry.content.contraptions.enchanting.forger;
 
+import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraftforge.items.ItemStackHandler;
+import net.minecraftforge.registries.ForgeRegistries;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.EnchantmentLevelUtil;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.Enchanting;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.EnchantingTemplateItem;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Inventory for the Blaze Forger.
@@ -31,7 +36,7 @@ import java.util.Map;
 public class BlazeForgerInventory extends ItemStackHandler {
     private final BlazeForgerBlockEntity forger;
     private int cost;
-    private int mode; // 0 = merge/combine, 1 = apply enchanted book, 2 = strip (not implemented in 1.20.1 without templates)
+    private int mode; // 0 = merge/combine, 1 = apply enchanted book/template, 2 = strip enchantment to blank template
 
     public BlazeForgerInventory(BlazeForgerBlockEntity forger) {
         super(6);
@@ -129,76 +134,287 @@ public class BlazeForgerInventory extends ItemStackHandler {
             return;
         }
 
-        // Case 0: EnchantingTemplate with stored enchantments - apply template enchantments to item
-        if (addition.getItem() instanceof EnchantingTemplateItem && EnchantingTemplateItem.hasStoredEnchantments(addition)) {
-            Map<Enchantment, Integer> templateEnchantments = EnchantingTemplateItem.getStoredEnchantments(addition);
-            Map<Enchantment, Integer> baseEnchantments = EnchantmentHelper.getEnchantments(base);
-            if (applyEnchantments(base, baseEnchantments, templateEnchantments)) {
-                stacks.set(5, ItemStack.EMPTY);
-                mode = 1;
-                applyRepairCost(base, addition);
-                return;
-            } else {
-                cost = 0;
-                return;
-            }
-        }
-        if (base.getItem() instanceof EnchantingTemplateItem && EnchantingTemplateItem.hasStoredEnchantments(base)) {
-            Map<Enchantment, Integer> templateEnchantments = EnchantingTemplateItem.getStoredEnchantments(base);
-            Map<Enchantment, Integer> additionEnchantments = EnchantmentHelper.getEnchantments(addition);
-            if (applyEnchantments(addition, additionEnchantments, templateEnchantments)) {
-                stacks.set(4, addition);
-                stacks.set(5, ItemStack.EMPTY);
-                mode = 1;
-                applyRepairCost(addition, base);
-                return;
-            } else {
-                cost = 0;
-                return;
-            }
-        }
-
-        Map<Enchantment, Integer> baseEnchantments = EnchantmentHelper.getEnchantments(base);
-        Map<Enchantment, Integer> additionEnchantments = EnchantmentHelper.getEnchantments(addition);
-
+        boolean baseIsTemplate = base.getItem() instanceof EnchantingTemplateItem;
+        boolean additionIsTemplate = addition.getItem() instanceof EnchantingTemplateItem;
         boolean baseIsBook = base.is(Items.ENCHANTED_BOOK);
         boolean additionIsBook = addition.is(Items.ENCHANTED_BOOK);
 
-        // Case 1: Both are enchanted books - merge them
-        if (baseIsBook && additionIsBook) {
-            if (combineEnchantments(base, addition, baseEnchantments, additionEnchantments)) {
-                stacks.set(5, ItemStack.EMPTY);
+        // ── Template handling ──────────────────────────────────────────
+
+        if (baseIsTemplate) {
+            EnchantingTemplateItem baseTemplate = (EnchantingTemplateItem) base.getItem();
+            Map<Enchantment, Integer> baseEnchantments = EnchantingTemplateItem.hasStoredEnchantments(base)
+                    ? EnchantingTemplateItem.getStoredEnchantments(base) : new LinkedHashMap<>();
+
+            if (additionIsTemplate) {
+                EnchantingTemplateItem addTemplate = (EnchantingTemplateItem) addition.getItem();
+                // Super enchanting mode type check
+                if (forger.hyper() && (!baseTemplate.isSpecial() || !addTemplate.isSpecial())) return;
+
+                Map<Enchantment, Integer> additionEnchantments = EnchantingTemplateItem.hasStoredEnchantments(addition)
+                        ? EnchantingTemplateItem.getStoredEnchantments(addition) : new LinkedHashMap<>();
+
+                if (additionEnchantments.isEmpty()) {
+                    // Addition is blank template -> strip enchantment from base to addition
+                    if (!splitEnchantments(base, addition, baseEnchantments)) return;
+                } else if (!baseEnchantments.isEmpty()) {
+                    // Both have enchantments -> combine templates
+                    if (combineEnchantments(base, addition, baseEnchantments, additionEnchantments))
+                        stacks.set(5, ItemStack.EMPTY);
+                    else return;
+                } else {
+                    // Base is blank, addition has enchantments -> nothing to do
+                    cost = 0;
+                    return;
+                }
+            } else if (EnchantingTemplateItem.hasStoredEnchantments(base)) {
+                // Template with enchantments + non-template item -> apply template to item
+                Map<Enchantment, Integer> additionEnchantments = EnchantmentHelper.getEnchantments(addition);
+                if (applyEnchantments(addition, additionEnchantments, baseEnchantments)) {
+                    stacks.set(4, addition);
+                    stacks.set(5, ItemStack.EMPTY);
+                    mode = 1;
+                    applyRepairCost(addition, base);
+                    return;
+                } else {
+                    cost = 0;
+                    return;
+                }
             } else {
                 cost = 0;
                 return;
             }
-        }
-        // Case 2: Base is an item, addition is an enchanted book - apply book to item
-        else if (!baseIsBook && additionIsBook) {
-            if (applyEnchantments(base, baseEnchantments, additionEnchantments)) {
-                stacks.set(5, ItemStack.EMPTY);
-                mode = 1;
+        } else if (additionIsTemplate) {
+            EnchantingTemplateItem addTemplate = (EnchantingTemplateItem) addition.getItem();
+            if (forger.hyper() && !addTemplate.isSpecial()) return;
+
+            if (EnchantingTemplateItem.hasStoredEnchantments(addition)) {
+                // Non-template base + template with enchantments -> apply template to base
+                Map<Enchantment, Integer> templateEnchantments = EnchantingTemplateItem.getStoredEnchantments(addition);
+                Map<Enchantment, Integer> baseEnchantments = EnchantmentHelper.getEnchantments(base);
+                if (applyEnchantments(base, baseEnchantments, templateEnchantments)) {
+                    stacks.set(5, ItemStack.EMPTY);
+                    mode = 1;
+                    applyRepairCost(base, addition);
+                    return;
+                } else {
+                    cost = 0;
+                    return;
+                }
             } else {
-                cost = 0;
-                return;
+                // Non-template base + blank template -> strip enchantment from base
+                Map<Enchantment, Integer> baseEnchantments;
+                if (baseIsBook) {
+                    baseEnchantments = EnchantmentHelper.deserializeEnchantments(
+                            base.getOrCreateTag().getList("StoredEnchantments", 10));
+                    if (baseEnchantments.isEmpty()) {
+                        baseEnchantments = EnchantmentHelper.getEnchantments(base);
+                    }
+                } else {
+                    baseEnchantments = EnchantmentHelper.getEnchantments(base);
+                }
+                if (baseEnchantments.isEmpty()) {
+                    cost = 0;
+                    return;
+                }
+
+                // For enchanted books with a single enchantment, convert back to a plain book
+                if (baseIsBook && baseEnchantments.size() == 1) {
+                    var entry = baseEnchantments.entrySet().iterator().next();
+                    ItemStack plainBook = new ItemStack(Items.BOOK);
+                    Map<Enchantment, Integer> templateEnch = new LinkedHashMap<>();
+                    templateEnch.put(entry.getKey(), entry.getValue());
+                    EnchantingTemplateItem.setStoredEnchantments(templateEnch, addition);
+                    stacks.set(4, plainBook);
+                    stacks.set(5, addition);
+                    int anvilCost = entry.getKey().getRarity().ordinal() + 1;
+                    cost += Math.max(1, anvilCost * 2) * entry.getValue();
+                    mode = 2;
+                } else {
+                    if (!splitEnchantments(base, addition, baseEnchantments)) return;
+                }
             }
         }
-        // Case 3: Same item type - combine (repair + merge enchantments)
-        else if (ItemStack.isSameItem(base, addition) && !baseIsBook) {
-            if (combineEnchantments(base, addition, baseEnchantments, additionEnchantments)) {
-                stacks.set(5, ItemStack.EMPTY);
-            } else {
-                cost = 0;
-                return;
-            }
-        }
-        // Otherwise: invalid combination
+        // ── Non-template handling ─────────────────────────────────────
         else {
-            cost = 0;
-            return;
+            Map<Enchantment, Integer> baseEnchantments = EnchantmentHelper.getEnchantments(base);
+            Map<Enchantment, Integer> additionEnchantments = EnchantmentHelper.getEnchantments(addition);
+
+            // Both are enchanted books - merge them
+            if (baseIsBook && additionIsBook) {
+                if (combineEnchantments(base, addition, baseEnchantments, additionEnchantments)) {
+                    stacks.set(5, ItemStack.EMPTY);
+                } else {
+                    cost = 0;
+                    return;
+                }
+            }
+            // Base is an item, addition is an enchanted book - apply book to item
+            else if (!baseIsBook && additionIsBook) {
+                if (applyEnchantments(base, baseEnchantments, additionEnchantments)) {
+                    stacks.set(5, ItemStack.EMPTY);
+                    mode = 1;
+                } else {
+                    cost = 0;
+                    return;
+                }
+            }
+            // Same item type - combine (repair + merge enchantments)
+            else if (ItemStack.isSameItem(base, addition) && !baseIsBook) {
+                if (combineEnchantments(base, addition, baseEnchantments, additionEnchantments)) {
+                    stacks.set(5, ItemStack.EMPTY);
+                } else {
+                    cost = 0;
+                    return;
+                }
+            }
+            // Base is a plain book + addition is template with enchantments -> make enchanted book
+            else if (base.is(Items.BOOK) && additionIsTemplate && EnchantingTemplateItem.hasStoredEnchantments(addition)) {
+                Map<Enchantment, Integer> templateEnchantments = EnchantingTemplateItem.getStoredEnchantments(addition);
+                if (applyEnchantmentsToBook(base, templateEnchantments)) {
+                    stacks.set(5, ItemStack.EMPTY);
+                    mode = 1;
+                } else {
+                    cost = 0;
+                    return;
+                }
+            }
+            // Otherwise: invalid combination
+            else {
+                cost = 0;
+                return;
+            }
         }
 
         applyRepairCost(base, addition);
+    }
+
+    /**
+     * Strip the first enchantment from the base item onto a blank EnchantingTemplate.
+     * Equivalent to upstream's splitEnchantments (mode 2).
+     *
+     * @param base               the enchanted item/book/template to strip from
+     * @param blankTemplate      the blank template to receive the enchantment
+     * @param baseEnchantments   the enchantments currently on the base item
+     * @return true if stripping was successful
+     */
+    protected boolean splitEnchantments(ItemStack base, ItemStack blankTemplate, Map<Enchantment, Integer> baseEnchantments) {
+        mode = 2;
+        if (baseEnchantments.isEmpty())
+            return false;
+
+        // Sort enchantments by registry ID for deterministic ordering
+        var registry = ForgeRegistries.ENCHANTMENTS;
+        var sorted = baseEnchantments.entrySet().stream()
+                .sorted(Comparator.comparingInt(e -> {
+                    var id = registry.getKey(e.getKey());
+                    return id != null ? id.hashCode() : 0;
+                }))
+                .toList();
+
+        // In non-hyper mode, skip curses
+        Enchantment enchantment = null;
+        int level = 0;
+        for (var entry : sorted) {
+            if (!forger.hyper() && entry.getKey().isCurse())
+                continue;
+            enchantment = entry.getKey();
+            level = entry.getValue();
+            break;
+        }
+
+        if (enchantment == null)
+            return false;
+
+        // Remove the enchantment from base
+        Map<Enchantment, Integer> remaining = new LinkedHashMap<>(baseEnchantments);
+        remaining.remove(enchantment);
+
+        // If base is an EnchantingTemplate, use the template's stored enchantments
+        if (base.getItem() instanceof EnchantingTemplateItem) {
+            EnchantingTemplateItem.setStoredEnchantments(remaining, base);
+        } else if (base.is(Items.ENCHANTED_BOOK)) {
+            // For enchanted books, update stored enchantments
+            if (remaining.isEmpty()) {
+                // Convert to plain book if no enchantments remain
+                base = new ItemStack(Items.BOOK);
+                stacks.set(4, base);
+            } else {
+                EnchantmentHelper.setEnchantments(remaining, base);
+                stacks.set(4, base);
+            }
+        } else {
+            EnchantmentHelper.setEnchantments(remaining, base);
+            stacks.set(4, base);
+        }
+
+        // Clamp level in non-hyper mode
+        if (!forger.hyper()) {
+            int maxLevel = EnchantmentLevelUtil.getMaxLevel(enchantment);
+            int extension = CeiConfigs.SERVER.maxHyperEnchantingLevelExtension.get();
+            level = Math.min(level, maxLevel + extension);
+        }
+
+        // Add the enchantment to the blank template
+        Map<Enchantment, Integer> templateEnch = new LinkedHashMap<>();
+        templateEnch.put(enchantment, level);
+        EnchantingTemplateItem.setStoredEnchantments(templateEnch, blankTemplate);
+        stacks.set(5, blankTemplate);
+
+        // Calculate cost based on enchantment rarity and level
+        double multiplier = CeiDataMaps.getSplittingCostMultiplier();
+        int anvilCost = enchantment.getRarity().ordinal() + 1;
+        cost += (int) (Math.max(1, anvilCost * 2) * level * multiplier);
+
+        return true;
+    }
+
+    /**
+     * Apply template enchantments directly to a plain book, creating an enchanted book.
+     * Equivalent to upstream's applyEnchantmentsToBook.
+     */
+    protected boolean applyEnchantmentsToBook(ItemStack book, Map<Enchantment, Integer> templateEnchantments) {
+        mode = 1;
+        if (templateEnchantments.isEmpty())
+            return false;
+
+        int addedCost = 0;
+        ItemStack enchantedBook = new ItemStack(Items.ENCHANTED_BOOK);
+        Map<Enchantment, Integer> resultEnchantments = new LinkedHashMap<>();
+
+        boolean hyper = forger.hyper();
+
+        for (Map.Entry<Enchantment, Integer> entry : templateEnchantments.entrySet()) {
+            Enchantment enchantment = entry.getKey();
+            boolean applicable = true;
+
+            // Check compatibility
+            for (Enchantment existing : resultEnchantments.keySet()) {
+                if (!existing.equals(enchantment) && !existing.isCompatibleWith(enchantment)) {
+                    if (hyper && CeiConfigs.SERVER.enableHyperEnchant.get()) {
+                        addedCost++;
+                    } else {
+                        applicable = false;
+                    }
+                    break;
+                }
+            }
+
+            if (applicable) {
+                resultEnchantments.put(enchantment, entry.getValue());
+                int anvilCost = enchantment.getRarity().ordinal() + 1;
+                anvilCost = Math.max(1, anvilCost / 2);
+                addedCost += anvilCost * entry.getValue();
+            }
+        }
+
+        if (resultEnchantments.isEmpty())
+            return false;
+
+        EnchantmentHelper.setEnchantments(resultEnchantments, enchantedBook);
+        stacks.set(4, enchantedBook);
+        this.cost += addedCost;
+        return true;
     }
 
     /**
