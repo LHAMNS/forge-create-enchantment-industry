@@ -26,7 +26,7 @@ This is a **Forge 1.20.1 port** of [Create: Enchantment Industry](https://github
 ## Original Project
 - **Upstream:** [DragonsPlusMinecraft/CreateEnchantmentIndustry](https://github.com/DragonsPlusMinecraft/CreateEnchantmentIndustry)
 - **Original Authors:** MarbleGateKeeper & LimonBlaze
-- **License:** MIT (same as upstream)
+- **License:** LGPL-3.0-or-later (same as upstream 1.21.1)
 
 ## Download
 [<img src="https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/curseforge_vector.svg">](https://www.curseforge.com/minecraft/mc-mods/create-enchantment-industry) [<img src="https://cdn.jsdelivr.net/npm/@intergrav/devins-badges@3/assets/cozy/available/modrinth_vector.svg">](https://modrinth.com/mod/create-enchantment-industry)
