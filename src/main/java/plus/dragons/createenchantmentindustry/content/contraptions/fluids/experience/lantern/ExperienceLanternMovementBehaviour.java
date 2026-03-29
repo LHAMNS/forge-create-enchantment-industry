@@ -11,6 +11,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
+import plus.dragons.createenchantmentindustry.compat.tlm.TLMCompat;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceHelper;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
@@ -91,6 +92,11 @@ public class ExperienceLanternMovementBehaviour implements MovementBehaviour {
                     break;
                 }
             }
+        }
+        // Drain experience from Touhou Little Maid's maids if the mod is loaded
+        if (TLMCompat.isLoaded() && CeiConfigs.SERVER.experienceLanternDrainMaidExperience.get()) {
+            plus.dragons.createenchantmentindustry.compat.tlm.MaidExperienceHandler
+                    .drainMaidExperience(level, effectiveAABB, tank);
         }
     }
 

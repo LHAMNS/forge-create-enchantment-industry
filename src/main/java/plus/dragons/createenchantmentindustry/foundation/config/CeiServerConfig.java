@@ -5,7 +5,7 @@ import net.createmod.catnip.config.ui.ConfigAnnotations;
 import net.minecraftforge.common.ForgeConfigSpec;
 
 public class CeiServerConfig extends ConfigBase {
-    
+
     public final ConfigBase.ConfigInt disenchanterTankCapacity = i(1000, 0,
         "disenchanterTankCapacity",
         Comments.disenchanterTankCapacity,
@@ -101,6 +101,9 @@ public class CeiServerConfig extends ConfigBase {
     public final ConfigFloat experienceLanternPullForceMultiplier = f(.075f, 0.0f, .5f,
             "experienceLanternPullForceMultiplier",
             Comments.experienceLanternPullForceMultiplier);
+    public final ConfigBool experienceLanternDrainMaidExperience = b(true,
+            "experienceLanternDrainMaidExperience",
+            Comments.experienceLanternDrainMaidExperience);
 
     @Override
     public void registerAll(ForgeConfigSpec.Builder builder) {
@@ -157,6 +160,8 @@ public class CeiServerConfig extends ConfigBase {
                 "The range at which experience orbs will be pulled into the lantern";
         static String experienceLanternPullForceMultiplier =
                 "Modifier for the amount of force with which to pull the experience orbs";
+        static String experienceLanternDrainMaidExperience =
+                "Whether the Experience Lantern will drain experience from nearby Touhou Little Maid's maids (requires TLM mod)";
 
     }
 

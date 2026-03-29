@@ -47,6 +47,13 @@ public class EnchantmentIndustry {
 
     private void registerEntries(IEventBus modEventBus) {
         CeiBlocks.register();
+        // Register stress impact values for kinetic blocks via FMLCommonSetupEvent
+        modEventBus.addListener((net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent e) -> e.enqueueWork(() -> {
+            com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
+                    CeiBlocks.MECHANICAL_GRINDSTONE.get(), () -> 4.0);
+            com.simibubi.create.api.stress.BlockStressValues.IMPACTS.register(
+                    CeiBlocks.GRINDSTONE_DRAIN.get(), () -> 4.0);
+        }));
         CeiBlockEntities.register();
         CeiContainerTypes.register();
         CeiEntityTypes.register();
@@ -59,6 +66,7 @@ public class EnchantmentIndustry {
         CeiDisplaySources.register();
         CeiMountedStorageTypes.register();
         CeiArmInteractionPoints.register();
+        CeiItemAttributes.register(modEventBus);
         REGISTRATE.registerEventListeners(modEventBus);
     }
 

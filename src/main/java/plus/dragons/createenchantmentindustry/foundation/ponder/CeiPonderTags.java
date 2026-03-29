@@ -2,6 +2,7 @@ package plus.dragons.createenchantmentindustry.foundation.ponder;
 
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.AllItems;
+import com.simibubi.create.infrastructure.ponder.AllCreatePonderTags;
 import com.tterrag.registrate.util.entry.RegistryEntry;
 import net.createmod.ponder.api.registration.PonderTagRegistrationHelper;
 import net.minecraft.resources.ResourceLocation;
@@ -25,10 +26,22 @@ public class CeiPonderTags {
         HELPER.addToTag(EXPERIENCE)
                 .add(CeiBlocks.DISENCHANTER)
                 .add(CeiBlocks.PRINTER)
+                .add(CeiBlocks.MECHANICAL_GRINDSTONE)
+                .add(CeiBlocks.EXPERIENCE_HATCH)
+                .add(CeiBlocks.EXPERIENCE_LANTERN)
+                .add(CeiBlocks.BLAZE_ENCHANTER)
+                .add(CeiBlocks.BLAZE_FORGER)
                 .add(CeiItems.ENCHANTING_GUIDE)
                 .add(AllItems.EXP_NUGGET)
                 .add(CeiItems.HYPER_EXP_BOTTLE)
                 .add(AllBlocks.ITEM_DRAIN)
                 .add(AllBlocks.SPOUT);
+
+        HELPER.addToTag(AllCreatePonderTags.ARM_TARGETS)
+                .add(CeiBlocks.BLAZE_ENCHANTER)
+                .add(CeiBlocks.BLAZE_FORGER);
+
+        HELPER.addToTag(AllCreatePonderTags.CONTRAPTION_ACTOR)
+                .add(CeiBlocks.EXPERIENCE_LANTERN);
     }
 }

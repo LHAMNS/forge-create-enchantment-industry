@@ -71,17 +71,16 @@ public class CeiBlocks {
     public static final BlockEntry<MechanicalGrindstoneBlock> MECHANICAL_GRINDSTONE = REGISTRATE
             .block("mechanical_grindstone", MechanicalGrindstoneBlock::new)
             .initialProperties(SharedProperties::stone)
-            .transform(TagGen.pickaxeOnly())
+                        .transform(TagGen.pickaxeOnly())
             .blockstate((ctx, pov) -> pov.simpleBlock(ctx.get(), AssetLookup.standardModel(ctx, pov)))
             .item(MechanicalGrindStoneItem::new)
-            .model(AssetLookup::customItemModel)
             .build()
             .register();
 
     public static final BlockEntry<GrindstoneDrainBlock> GRINDSTONE_DRAIN = REGISTRATE
             .block("grindstone_drain", p -> new GrindstoneDrainBlock(MECHANICAL_GRINDSTONE.get(), p))
             .initialProperties(SharedProperties::stone)
-            .transform(TagGen.pickaxeOnly())
+                        .transform(TagGen.pickaxeOnly())
             .blockstate((ctx, pov) -> pov.simpleBlock(ctx.get(), AssetLookup.partialBaseModel(ctx, pov)))
             .loot((lt, block) -> lt.dropOther(block, MECHANICAL_GRINDSTONE.get()))
             .register();

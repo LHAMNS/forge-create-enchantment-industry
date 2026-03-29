@@ -18,9 +18,11 @@ import net.minecraftforge.fluids.FluidType;
 import plus.dragons.createenchantmentindustry.EnchantmentIndustry;
 import plus.dragons.createenchantmentindustry.compat.jei.category.DisenchantingCategory;
 import plus.dragons.createenchantmentindustry.compat.jei.category.GrindingCategory;
+import plus.dragons.createenchantmentindustry.compat.jei.category.PrintingCategory;
 import plus.dragons.createenchantmentindustry.compat.jei.category.RecipeCategoryBuilder;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.disenchanter.DisenchantRecipe;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.grindstone.GrindingRecipe;
+import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.printer.PrintingRecipe;
 import plus.dragons.createenchantmentindustry.entry.CeiBlocks;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.entry.CeiRecipeTypes;
@@ -81,6 +83,13 @@ public class CeiJEIPlugin implements IModPlugin {
                         .catalyst(CeiBlocks.DISENCHANTER::get)
                         .emptyBackground(177, 50)
                         .build("disenchanting", DisenchantingCategory::new)
+        );
+        allCategories.add(
+                builder(PrintingRecipe.class)
+                        .addTypedRecipes(CeiRecipeTypes.PRINTING)
+                        .catalyst(CeiBlocks.PRINTER::get)
+                        .emptyBackground(177, 70)
+                        .build("printing", PrintingCategory::new)
         );
         allCategories.add(
                 builder(GrindingRecipe.class)
