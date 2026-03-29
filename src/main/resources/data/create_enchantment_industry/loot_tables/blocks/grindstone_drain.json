@@ -11,7 +11,7 @@
       "entries": [
         {
           "type": "minecraft:item",
-          "name": "create_enchantment_industry:grindstone_drain"
+          "name": "create_enchantment_industry:mechanical_grindstone"
         }
       ],
       "rolls": 1.0

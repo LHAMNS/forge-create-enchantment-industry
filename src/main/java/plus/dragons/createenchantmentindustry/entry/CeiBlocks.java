@@ -58,6 +58,7 @@ public class CeiBlocks {
             .transform(DisplaySource.displaySource(CeiDisplaySources.TARGET_ENCHANTMENT))
             .transform(TagGen.pickaxeOnly())
             .blockstate((ctx, pov) -> pov.simpleBlock(ctx.get(), AssetLookup.standardModel(ctx, pov)))
+            .simpleItem()
             .register();
 
     public static final BlockEntry<BlazeForgerBlock> BLAZE_FORGER = REGISTRATE
@@ -66,6 +67,7 @@ public class CeiBlocks {
             .properties(p -> p.lightLevel(BlazeForgerBlock::getLight))
             .transform(TagGen.pickaxeOnly())
             .blockstate((ctx, pov) -> pov.simpleBlock(ctx.get(), AssetLookup.standardModel(ctx, pov)))
+            .simpleItem()
             .register();
 
     public static final BlockEntry<MechanicalGrindstoneBlock> MECHANICAL_GRINDSTONE = REGISTRATE
