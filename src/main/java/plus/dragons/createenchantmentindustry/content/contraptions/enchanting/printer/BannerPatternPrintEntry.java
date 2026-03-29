@@ -37,7 +37,13 @@ public class BannerPatternPrintEntry implements PrintEntry {
     }
 
     @Override
+    public boolean isEnabled() {
+        return CeiConfigs.SERVER.enableBannerPatternPrinting.get();
+    }
+
+    @Override
     public boolean match(ItemStack toPrint) {
+        if (!isEnabled()) return false;
         if (!toPrint.is(ItemTags.BANNERS))
             return false;
         ListTag patterns = getPatterns(toPrint);

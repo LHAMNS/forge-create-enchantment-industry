@@ -67,7 +67,13 @@ public class PrintEntries {
         }
 
         @Override
+        public boolean isEnabled() {
+            return CeiConfigs.SERVER.enableEnchantedBookPrinting.get();
+        }
+
+        @Override
         public boolean match(ItemStack toPrint) {
+            if (!isEnabled()) return false;
             return toPrint.is(Items.ENCHANTED_BOOK);
         }
 
@@ -156,7 +162,13 @@ public class PrintEntries {
         }
 
         @Override
+        public boolean isEnabled() {
+            return CeiConfigs.SERVER.enableWrittenBookPrinting.get();
+        }
+
+        @Override
         public boolean match(ItemStack toPrint) {
+            if (!isEnabled()) return false;
             return toPrint.is(Items.WRITTEN_BOOK);
         }
 
@@ -178,7 +190,13 @@ public class PrintEntries {
         @Override
         public ItemStack print(ItemStack target, ItemStack material) {
             var ret = target.copy();
-            if (!CeiConfigs.SERVER.copyingWrittenBookAlwaysGetOriginalVersion.get()) {
+            int genChange = CeiConfigs.SERVER.printingGenerationChange.get();
+            if (genChange != 0) {
+                var tag = ret.getOrCreateTag();
+                int generation = tag.getInt("generation");
+                int newGen = Math.max(0, Math.min(3, generation - genChange));
+                tag.putInt("generation", newGen);
+            } else if (!CeiConfigs.SERVER.copyingWrittenBookAlwaysGetOriginalVersion.get()) {
 				var tag = ret.getOrCreateTag();
 				int generation = tag.getInt("generation");
 				if (generation <= 1)
@@ -235,7 +253,13 @@ public class PrintEntries {
         }
 
         @Override
+        public boolean isEnabled() {
+            return CeiConfigs.SERVER.enableNameTagPrinting.get();
+        }
+
+        @Override
         public boolean match(ItemStack toPrint) {
+            if (!isEnabled()) return false;
             if (!toPrint.is(Items.NAME_TAG))
                 return false;
             // Don't match name tags with custom names - those are handled by CustomNamePrintEntry
@@ -301,7 +325,13 @@ public class PrintEntries {
         }
 
         @Override
+        public boolean isEnabled() {
+            return CeiConfigs.SERVER.enableSchedulePrinting.get();
+        }
+
+        @Override
         public boolean match(ItemStack toPrint) {
+            if (!isEnabled()) return false;
             return toPrint.is(AllItems.SCHEDULE.get());
         }
 

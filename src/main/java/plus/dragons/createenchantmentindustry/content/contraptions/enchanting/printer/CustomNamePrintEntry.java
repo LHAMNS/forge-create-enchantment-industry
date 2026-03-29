@@ -38,7 +38,13 @@ public class CustomNamePrintEntry implements PrintEntry {
     }
 
     @Override
+    public boolean isEnabled() {
+        return CeiConfigs.SERVER.enableCustomNamePrinting.get();
+    }
+
+    @Override
     public boolean match(ItemStack toPrint) {
+        if (!isEnabled()) return false;
         // Match name tags that have a custom name set
         if (!toPrint.is(Items.NAME_TAG))
             return false;

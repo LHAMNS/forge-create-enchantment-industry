@@ -70,6 +70,24 @@ public class CeiAdvancements {
              .announce(true)
              .parent(COPIABLE_MASTERPIECE)
              .build(),
+    BRAND_REGISTRY = ADVANCEMENT_FACTORY.builder("brand_registry")
+            .title("Brand Registry")
+            .description("Use a Printer to rename an item")
+            .icon(Items.NAME_TAG)
+            .parent(COPIABLE_MYSTERY)
+            .build(),
+    SUPPLY_CHAIN_REFACTOR = ADVANCEMENT_FACTORY.builder("supply_chain_refactor")
+            .title("Supply Chain Refactor")
+            .description("Use a Printer to change a package's address")
+            .icon(Items.PAPER)
+            .parent(BRAND_REGISTRY)
+            .build(),
+    ASSEMBLY_AESTHETICS = ADVANCEMENT_FACTORY.builder("assembly_aesthetics")
+            .title("Assembly Aesthetics")
+            .description("Use a Printer to change a package's pattern")
+            .icon(Items.PAPER)
+            .parent(SUPPLY_CHAIN_REFACTOR)
+            .build(),
     GREAT_PUBLISHER = ADVANCEMENT_FACTORY.builder("great_publisher")
             .title("Great Publisher")
             .description("Copy 1000 books using Printer")
@@ -98,13 +116,27 @@ public class CeiAdvancements {
             .announce(true)
             .parent(GONE_WITH_THE_FOIL)
             .build(),
+    SPIRITUAL_RETURN = ADVANCEMENT_FACTORY.builder("spiritual_return")
+            .title("Spiritual Return")
+            .description("Retrieve some experience using an Experience Hatch")
+            .icon(AllItems.EXP_NUGGET)
+            .announce(true)
+            .parent(SPIRIT_TAKING)
+            .build(),
     A_SHOWER_EXPERIENCE = ADVANCEMENT_FACTORY.builder("a_shower_experience")
             .title("A Shower \"Experience\"")
             .description("Break a Fluid Pipe and bathe in the leaked experience")
             .icon(AllBlocks.FLUID_PIPE)
             .announce(true)
             .frame(FrameType.GOAL)
-            .parent(SPIRIT_TAKING)
+            .parent(SPIRITUAL_RETURN)
+            .build(),
+    LUMEN_NEXUS = ADVANCEMENT_FACTORY.builder("lumen_nexus")
+            .title("Lumen Nexus")
+            .description("Obtain an Experience Lantern")
+            .icon(CeiBlocks.EXPERIENCE_LANTERN)
+            .externalTrigger("have_experience_lantern", InventoryChangeTrigger.TriggerInstance.hasItems(CeiBlocks.EXPERIENCE_LANTERN.get().asItem()))
+            .parent(SPIRITUAL_RETURN)
             .build(),
     EXPERIENCED_RECYCLER = ADVANCEMENT_FACTORY.builder("experienced_recycler")
             .title("Experienced Recycler")
@@ -159,11 +191,18 @@ public class CeiAdvancements {
             .parent(SIGIL_FORGING)
             .build(),
     // Blaze Forger Branch
+    BORN_TALENT_OF_FIRE = ADVANCEMENT_FACTORY.builder("born_talent_of_fire")
+            .title("Born Talent of Fire")
+            .description("Blazes were born for this. Obtain a Blaze Forger")
+            .icon(CeiBlocks.BLAZE_FORGER)
+            .externalTrigger("have_blaze_forger", InventoryChangeTrigger.TriggerInstance.hasItems(CeiBlocks.BLAZE_FORGER.get().asItem()))
+            .parent(EXPERIENCED_ENGINEER)
+            .build(),
     BLAZING_FUSION = ADVANCEMENT_FACTORY.builder("blazing_fusion")
             .title("Blazing Fusion")
             .description("Merge two enchanted items or books using the Blaze Forger")
             .icon(Items.ANVIL)
-            .parent(BLAZES_NEW_JOB)
+            .parent(BORN_TALENT_OF_FIRE)
             .build(),
     SIGIL_CASTING = ADVANCEMENT_FACTORY.builder("sigil_casting")
             .title("Sigil Casting")

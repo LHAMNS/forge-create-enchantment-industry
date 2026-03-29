@@ -38,6 +38,7 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import com.simibubi.create.foundation.blockEntity.behaviour.ValueBoxTransform;
 import net.minecraft.world.level.block.LightningRodBlock;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
@@ -89,6 +90,10 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     protected boolean isCreative;
     /** Seed for deterministic enchantment randomization. Updated after each enchanting operation. */
     protected long enchantmentSeed;
+    /** ScrollValue-based enchant level (0 = not set, 1-maxLevel). Equivalent to upstream's EnchanterBehaviour value. */
+    protected int enchantLevel;
+    /** The EnchanterBehaviour (ScrollValueBehaviour) for scroll-wheel enchant level selection. */
+    protected EnchanterBehaviour enchanterBehaviour;
     Map<Direction, LazyOptional<EnchantingItemHandler>> itemHandlers;
     boolean sendParticles;
     LerpedFloat headAnimation;
@@ -119,6 +124,30 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         isCreative = false;
     }
 
+    /**
+     * Get the maximum enchant level based on whether super experience is active.
+     * Equivalent to upstream's getMaxEnchantLevel().
+     */
+    public int getMaxEnchantLevel() {
+        return getMaxEnchantLevel(hyper());
+    }
+
+    /**
+     * Get the maximum enchant level for the given mode.
+     */
+    public int getMaxEnchantLevel(boolean superMode) {
+        int max = CeiConfigs.SERVER.blazeEnchanterMaxEnchantLevel.get();
+        int maxSuper = CeiConfigs.SERVER.blazeEnchanterMaxSuperEnchantLevel.get();
+        return superMode ? Math.max(max, maxSuper) : Math.min(max, maxSuper);
+    }
+
+    /**
+     * Get the current scroll-value enchant level.
+     */
+    public int getEnchantLevel() {
+        return enchanterBehaviour != null ? enchanterBehaviour.getValue() : enchantLevel;
+    }
+
     @Override
     @SuppressWarnings("deprecation") //Fluid Tags are still useful for mod interaction
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
@@ -136,11 +165,27 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
                     else
                         updateHeatLevel(BlazeEnchanterBlock.HeatLevel.SMOULDERING);
                 }));
+        // Register the ScrollValue-based EnchanterBehaviour for enchant level selection
+        enchanterBehaviour = new EnchanterBehaviour(this,
+                new com.simibubi.create.foundation.blockEntity.behaviour.CenteredSideValueBoxTransform(
+                        (blockState, direction) -> direction.getAxis().isHorizontal()),
+                new EnchanterTemplateItemTransform());
+        enchanterBehaviour.between(0, getMaxEnchantLevel());
+        enchanterBehaviour.withCallback(i -> {
+            this.enchantLevel = i;
+        });
+        behaviours.add(enchanterBehaviour);
         registerAwardables(behaviours,
                 CeiAdvancements.FIRST_ORDER.asCreateAdvancement(),
                 CeiAdvancements.ADDITIONAL_ORDER.asCreateAdvancement(),
                 CeiAdvancements.HYPOTHETICAL_EXTENSION.asCreateAdvancement(),
-                CeiAdvancements.OSHA_VIOLATION.asCreateAdvancement());
+                CeiAdvancements.OSHA_VIOLATION.asCreateAdvancement(),
+                CeiAdvancements.SIGIL_FORGING.asCreateAdvancement(),
+                CeiAdvancements.THOUSAND_RUNES.asCreateAdvancement(),
+                CeiAdvancements.PROBABILITY_SPIKE.asCreateAdvancement(),
+                CeiAdvancements.TRANSCENDENT_OVERCLOCK.asCreateAdvancement(),
+                CeiAdvancements.PARADOX_FUSION.asCreateAdvancement(),
+                CeiAdvancements.OMNI_ENCHANTER.asCreateAdvancement());
     }
 
     @Override
@@ -700,6 +745,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         compoundTag.putInt("SuperExperience", superExperience);
         compoundTag.putBoolean("IsCreative", isCreative);
         compoundTag.putLong("EnchantmentSeed", enchantmentSeed);
+        compoundTag.putInt("EnchantLevel", enchantLevel);
         if (!templateItem.isEmpty())
             compoundTag.put("TemplateItem", templateItem.serializeNBT());
         if (heldItem != null)
@@ -727,6 +773,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         superExperience = compoundTag.getInt("SuperExperience");
         isCreative = compoundTag.getBoolean("IsCreative");
         enchantmentSeed = compoundTag.contains("EnchantmentSeed") ? compoundTag.getLong("EnchantmentSeed") : worldPosition.asLong();
+        enchantLevel = compoundTag.getInt("EnchantLevel");
         if (compoundTag.contains("TemplateItem")) {
             templateItem = ItemStack.of(compoundTag.getCompound("TemplateItem"));
             if (!templateItem.isEmpty() && templateItem.isEnchantable()) {
@@ -846,7 +893,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
                 int surfaceY = level.getHeight(Heightmap.Types.WORLD_SURFACE, mutable.getX(), mutable.getZ()) - 1;
                 mutable.setY(surfaceY);
                 BlockState state = level.getBlockState(mutable);
-                if (state.getBlock() instanceof LightningRodBlock) {
+                if (state.is(CeiTags.LIGHTNING_RODS) || state.getBlock() instanceof LightningRodBlock) {
                     return mutable.immutable();
                 }
             }
@@ -868,5 +915,21 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     @Override
     public AbstractContainerMenu createMenu(int pContainerId, Inventory pPlayerInventory, Player pPlayer) {
         return new EnchantingGuideMenu(CeiContainerTypes.ENCHANTING_GUIDE_FOR_BLAZE.get(), pContainerId, pPlayerInventory, targetItem, getBlockPos());
+    }
+
+    /**
+     * ValueBoxTransform for the template item slot on the Blaze Enchanter.
+     * Positioned above the enchant level scroll value.
+     */
+    private static class EnchanterTemplateItemTransform extends ValueBoxTransform.Sided {
+        @Override
+        protected Vec3 getSouthLocation() {
+            return VecHelper.voxelSpace(8, 12, 14.5);
+        }
+
+        @Override
+        protected boolean isSideActive(BlockState state, Direction direction) {
+            return direction.getAxis().isHorizontal();
+        }
     }
 }

@@ -7,6 +7,8 @@
   "mixins": [
     "AbstractFurnaceBlockEntityMixin",
     "BasinBlockEntityMixin",
+    "ConnectivityHandlerMixin",
+    "CreateNBTProcessorsMixin",
     "CrushingWheelControllerBlockEntityMixin",
     "DeployerFakePlayerMixin",
     "FillingBySpoutMixin",

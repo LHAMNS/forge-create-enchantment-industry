@@ -30,7 +30,13 @@ public class AddressPrintEntry implements PrintEntry {
     }
 
     @Override
+    public boolean isEnabled() {
+        return CeiConfigs.SERVER.enablePackageAddressPrinting.get();
+    }
+
+    @Override
     public boolean match(ItemStack toPrint) {
+        if (!isEnabled()) return false;
         if (!(toPrint.getItem() instanceof PackageItem))
             return false;
         String address = PackageItem.getAddress(toPrint);

@@ -124,12 +124,36 @@ public class CeiServerConfig extends ConfigBase {
     public final ConfigBool enableSchedulePrinting = b(true,
             "enableSchedulePrinting",
             Comments.enableSchedulePrinting);
+    public final ConfigBool enableCustomNamePrinting = b(true,
+            "enableCustomNamePrinting",
+            Comments.enableCustomNamePrinting);
+    public final ConfigBool enableBannerPatternPrinting = b(true,
+            "enableBannerPatternPrinting",
+            Comments.enableBannerPatternPrinting);
+    public final ConfigBool enablePackagePatternPrinting = b(true,
+            "enablePackagePatternPrinting",
+            Comments.enablePackagePatternPrinting);
+    public final ConfigBool enablePackageAddressPrinting = b(true,
+            "enablePackageAddressPrinting",
+            Comments.enablePackageAddressPrinting);
+    public final ConfigBool printingCustomNameAsItemName = b(false,
+            "printingCustomNameAsItemName",
+            Comments.printingCustomNameAsItemName);
     public final ConfigInt printingProcessingTime = i(50, 1, 1000,
             "printingProcessingTime",
             Comments.printingProcessingTime);
     public final ConfigInt printingGenerationChange = i(-1, -3, 1,
             "printingGenerationChange",
             Comments.printingGenerationChange);
+    public final ConfigFloat printingEnchantedBookCostMultiplier = f(1, 0.01f, 100,
+            "printingEnchantedBookCostMultiplier",
+            Comments.printingEnchantedBookCostMultiplier);
+    public final ConfigBool printingEnchantedBookDenylistStopCopying = b(true,
+            "printingEnchantedBookDenylistStopCopying",
+            Comments.printingEnchantedBookDenylistStopCopying);
+    public final ConfigBool experienceVaporizeOnPlacement = b(true,
+            "experienceVaporizeOnPlacement",
+            Comments.experienceVaporizeOnPlacement);
 
     // Experience Lantern
     public final ConfigInt experienceLanternFluidCapacity = i(1000, 100,
@@ -219,10 +243,26 @@ public class CeiServerConfig extends ConfigBase {
                 "Whether the Printer can copy Name Tags";
         static String enableSchedulePrinting =
                 "Whether the Printer can copy Train Schedules";
+        static String enableCustomNamePrinting =
+                "Whether the Printer can print custom names onto items";
+        static String enableBannerPatternPrinting =
+                "Whether the Printer can print banner patterns";
+        static String enablePackagePatternPrinting =
+                "Whether the Printer can change package patterns";
+        static String enablePackageAddressPrinting =
+                "Whether the Printer can assign package addresses";
+        static String printingCustomNameAsItemName =
+                "Whether printing custom names (displayed in italics) should instead print as item names (displayed in non-italics)";
         static String printingProcessingTime =
                 "The time in ticks for the Printer to complete one copy operation";
         static String printingGenerationChange =
                 "Generation change applied when copying Written Books (-3 to 1). -1 means the copy is one generation older.";
+        static String printingEnchantedBookCostMultiplier =
+                "Cost multiplier for printing Enchanted Books";
+        static String printingEnchantedBookDenylistStopCopying =
+                "Whether the Printer denylist prevents Enchanted Books from being copied";
+        static String experienceVaporizeOnPlacement =
+                "Whether Liquid Experience will vaporize into Experience Orbs upon placement";
         static String experienceLanternFluidCapacity =
                 "The amount of liquid an Experience Lantern can hold (mB)";
         static String experienceLanternDrainRate =

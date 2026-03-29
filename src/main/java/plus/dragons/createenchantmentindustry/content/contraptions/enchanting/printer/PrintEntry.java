@@ -14,6 +14,14 @@ public interface PrintEntry {
 
     ResourceLocation id();
 
+    /**
+     * Whether this print entry type is currently enabled by config.
+     * Entries returning false will not match any items.
+     */
+    default boolean isEnabled() {
+        return true;
+    }
+
     boolean match(ItemStack toPrint);
 
     boolean valid(ItemStack target, ItemStack tested);

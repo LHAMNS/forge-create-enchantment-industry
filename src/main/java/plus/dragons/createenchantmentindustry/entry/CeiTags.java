@@ -29,6 +29,9 @@ import java.util.Set;
 
 
 public class CeiTags {
+    /** Tag for lightning rod blocks. Uses forge:lightning_rods to support modded lightning rods. */
+    public static final TagKey<Block> LIGHTNING_RODS = BlockTags.create(new ResourceLocation("forge", "lightning_rods"));
+
     public static <T> TagKey<T> optionalTag(IForgeRegistry<T> registry,
                                             ResourceLocation id) {
         return registry.tags()

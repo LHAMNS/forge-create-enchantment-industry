@@ -46,6 +46,23 @@ public class CeiItems {
             .lang("Nugget of Super Experience")
             .register();
 
+    public static final ItemEntry<Item> EXPERIENCE_CAKE_BASE = REGISTRATE
+            .item("experience_cake_base", Item::new)
+            .lang("Experience Cake Base")
+            .register();
+
+    public static final ItemEntry<Item> EXPERIENCE_CAKE = REGISTRATE
+            .item("experience_cake", Item::new)
+            .properties(p -> p.rarity(Rarity.UNCOMMON))
+            .lang("Experience Cake")
+            .register();
+
+    public static final ItemEntry<Item> EXPERIENCE_CAKE_SLICE = REGISTRATE
+            .item("experience_cake_slice", Item::new)
+            .properties(p -> p.rarity(Rarity.UNCOMMON))
+            .lang("Experience Cake Slice")
+            .register();
+
     public static void register() {}
 
 }

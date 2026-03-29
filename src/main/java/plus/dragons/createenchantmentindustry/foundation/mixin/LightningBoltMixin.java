@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import plus.dragons.createenchantmentindustry.entry.CeiBlocks;
+import plus.dragons.createenchantmentindustry.entry.CeiTags;
 import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 
 import java.util.Optional;
@@ -39,7 +40,8 @@ public abstract class LightningBoltMixin extends Entity {
         Level level = this.level();
         BlockPos pos = this.getStrikePosition();
         BlockState blockstate = level.getBlockState(pos);
-        if (blockstate.getBlock() instanceof LightningRodBlock) {
+        // Check forge:lightning_rods tag instead of only vanilla LightningRodBlock
+        if (blockstate.is(CeiTags.LIGHTNING_RODS) && blockstate.hasProperty(LightningRodBlock.FACING)) {
             pos = pos.relative(blockstate.getValue(LightningRodBlock.FACING).getOpposite());
             blockstate = level.getBlockState(pos);
         }
