@@ -113,9 +113,14 @@ public class AccumulativeTrigger extends SimpleCriterionTrigger<AccumulativeTrig
             this.requirement = requirement;
         }
 
-        public boolean matches(ResourceLocation resourceLocation, Player player, int change) {
+        public void addProgress(ResourceLocation resourceLocation, Player player, int change) {
             AccumulativeData data = get(player.level());
             data.change(resourceLocation, player.getUUID(), change);
+        }
+
+        public boolean matches(ResourceLocation resourceLocation, Player player, int change) {
+            addProgress(resourceLocation, player, change);
+            AccumulativeData data = get(player.level());
             return requirement.matches(data.get(resourceLocation, player.getUUID()));
         }
 

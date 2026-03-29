@@ -83,34 +83,35 @@ public class FurnaceExpExtractor implements IFluidHandler{
             if (action.execute()) recipesUsed.clear();
             return new FluidStack(CeiFluids.EXPERIENCE.get(), total);
         }
-        ArrayList<Recipe<?>> allRecipes = new ArrayList<>();
-        for (Object2IntMap.Entry<ResourceLocation> entry : recipesUsed.object2IntEntrySet()) {
-            BE.getLevel().getRecipeManager().byKey(entry.getKey()).ifPresent(recipe -> {
-                for(int i=0;i<entry.getIntValue();i++){
-                    allRecipes.add(recipe);
-                }
-            });
-        }
-        var done = false;
-        var result = 0;
-        for(var recipe: allRecipes){
-            if (done) {
-                if (action.execute()) {
-                    BE.setRecipeUsed(recipe);
-                }
+        // Efficient mathematical approach: iterate recipe entries with counts, no ArrayList expansion
+        float result = 0;
+        var it = new java.util.ArrayList<>(recipesUsed.object2IntEntrySet());
+        Object2IntOpenHashMap<ResourceLocation> remaining = new Object2IntOpenHashMap<>();
+        boolean budgetExhausted = false;
+        for (var entry : it) {
+            var recipeOpt = BE.getLevel().getRecipeManager().byKey(entry.getKey());
+            if (recipeOpt.isEmpty()) continue;
+            if (!(recipeOpt.get() instanceof AbstractCookingRecipe cookingRecipe)) continue;
+            float expPerItem = cookingRecipe.getExperience();
+            int count = entry.getIntValue();
+            if (budgetExhausted) {
+                remaining.put(entry.getKey(), count);
             } else {
-                if (!(recipe instanceof AbstractCookingRecipe cookingRecipe)) continue;
-                var exp = cookingRecipe.getExperience();
-                if (exp <= maxDrain - result) {
-                    result+=exp;
-                } else {
-                    // This recipe doesn't fit in the remaining budget, keep it
-                    done = true;
-                    if (action.execute()) {
-                        recipesUsed.clear();
-                        BE.setRecipeUsed(recipe);
-                    }
+                int canDrain = (int) Math.min(count, Math.floor((maxDrain - result) / Math.max(expPerItem, 0.001f)));
+                result += canDrain * expPerItem;
+                int leftover = count - canDrain;
+                if (leftover > 0) {
+                    remaining.put(entry.getKey(), leftover);
+                    budgetExhausted = true;
                 }
+            }
+        }
+        if (action.execute()) {
+            recipesUsed.clear();
+            for (var e : remaining.object2IntEntrySet()) {
+                BE.getLevel().getRecipeManager().byKey(e.getKey()).ifPresent(r -> {
+                    for (int i = 0; i < e.getIntValue(); i++) BE.setRecipeUsed(r);
+                });
             }
         }
         return new FluidStack(CeiFluids.EXPERIENCE.get(), (int) Math.floor(result));

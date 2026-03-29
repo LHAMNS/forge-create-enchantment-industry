@@ -100,7 +100,9 @@ public class BlazeForgerInventory extends ItemStackHandler {
      */
     protected int getExperienceCost() {
         if (cost == 0) return 0;
-        return Enchanting.expPointFromLevel(cost);
+        // Include base repair costs from both input items to match vanilla anvil pricing
+        int repairPenalty = stacks.get(0).getBaseRepairCost() + stacks.get(1).getBaseRepairCost();
+        return Enchanting.expPointFromLevel(cost + repairPenalty);
     }
 
     protected ItemStack getResult(int slot) {

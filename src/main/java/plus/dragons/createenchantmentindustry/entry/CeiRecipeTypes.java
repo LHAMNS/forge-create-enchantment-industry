@@ -1,6 +1,6 @@
 package plus.dragons.createenchantmentindustry.entry;
 
-import com.simibubi.create.Create;
+import plus.dragons.createenchantmentindustry.EnchantmentIndustry;
 import com.simibubi.create.content.processing.recipe.ProcessingRecipeBuilder;
 import com.simibubi.create.content.processing.recipe.ProcessingRecipeSerializer;
 import com.simibubi.create.foundation.recipe.IRecipeTypeInfo;
@@ -38,7 +38,7 @@ public enum CeiRecipeTypes implements IRecipeTypeInfo {
 
     CeiRecipeTypes(Supplier<RecipeSerializer<?>> serializerSupplier) {
         String name = Lang.asId(name());
-        id = Create.asResource(name);
+        id = EnchantmentIndustry.genRL(name);
         serializerObject = CeiRecipeTypes.Registers.SERIALIZER_REGISTER.register(name, serializerSupplier);
         typeObject = CeiRecipeTypes.Registers.TYPE_REGISTER.register(name, () -> simpleType(id));
         type = typeObject;

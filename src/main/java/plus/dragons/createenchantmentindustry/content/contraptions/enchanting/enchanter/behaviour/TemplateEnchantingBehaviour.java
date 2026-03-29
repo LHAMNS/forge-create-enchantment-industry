@@ -77,20 +77,38 @@ public class TemplateEnchantingBehaviour extends EnchantingBehaviour {
     public int getExperienceCost(ItemStack targetItem, boolean hyper) {
         List<EnchantmentInstance> available = getAvailableEnchantments(hyper);
         if (available.isEmpty()) return 0;
-        // Average cost of available enchantments
-        int totalCost = 0;
+        // Use max cost among available enchantments to prevent systematic underpricing
+        int maxCost = 0;
         for (EnchantmentInstance inst : available) {
-            totalCost += Enchanting.getExperienceConsumption(inst.enchantment, inst.level);
+            maxCost = Math.max(maxCost, Enchanting.getExperienceConsumption(inst.enchantment, inst.level));
         }
-        return totalCost / available.size();
+        return maxCost;
+    }
+
+    // Cache for available enchantments to avoid per-tick registry scan
+    private List<EnchantmentInstance> cachedNormal = null;
+    private List<EnchantmentInstance> cachedHyper = null;
+    private ItemStack cachedTarget = ItemStack.EMPTY;
+
+    public void invalidateCache() {
+        cachedNormal = null;
+        cachedHyper = null;
     }
 
     /**
      * Get enchantments that can be applied to the template target item at the current level.
      */
     private List<EnchantmentInstance> getAvailableEnchantments(boolean hyper) {
+        if (templateTarget.isEmpty()) return List.of();
+        // Invalidate cache if template target changed
+        if (!ItemStack.isSameItemSameTags(templateTarget, cachedTarget)) {
+            cachedTarget = templateTarget.copy();
+            cachedNormal = null;
+            cachedHyper = null;
+        }
+        if (hyper && cachedHyper != null) return cachedHyper;
+        if (!hyper && cachedNormal != null) return cachedNormal;
         List<EnchantmentInstance> result = new ArrayList<>();
-        if (templateTarget.isEmpty()) return result;
 
         // Get all enchantments that can be applied to the template target,
         // filtered by the enchantment tag system
@@ -113,6 +131,7 @@ public class TemplateEnchantingBehaviour extends EnchantingBehaviour {
                 }
             }
         }
+        if (hyper) cachedHyper = result; else cachedNormal = result;
         return result;
     }
 
