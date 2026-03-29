@@ -22,7 +22,8 @@
     "dragonLibLegacy.CreateAdvancementMixin",
     "dragonLibLegacy.FluidReactionsMixin",
     "OpenEndedPipeMixin",
-    "LightningBoltMixin"
+    "LightningBoltMixin",
+    "SmartBlockEntityMixin"
   ],
   "client": [
     "CameraMixin"

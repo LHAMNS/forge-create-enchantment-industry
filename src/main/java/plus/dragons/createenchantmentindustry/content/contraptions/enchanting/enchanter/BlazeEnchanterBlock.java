@@ -98,11 +98,11 @@ public class BlazeEnchanterBlock extends HorizontalDirectionalBlock implements I
 
         // Experience fuel handling: right-click with a registered fuel item to supply XP
         if (!heldItem.isEmpty()) {
-            // Creative Blaze Cake (from Create) toggles creative mode on the tank
+            // Creative Blaze Cake (from Create) toggles creative mode on the enchanter
             if (heldItem.is(AllItems.CREATIVE_BLAZE_CAKE.get())) {
                 return onBlockEntityUse(worldIn, pos, be -> {
-                    // Toggle heat level for creative fuel
                     if (!worldIn.isClientSide) {
+                        be.applyCreativeMode();
                         var currentHeat = state.getValue(HEAT_LEVEL);
                         var nextHeat = currentHeat.nextActiveLevel();
                         be.updateHeatLevel(nextHeat);
@@ -116,11 +116,27 @@ public class BlazeEnchanterBlock extends HorizontalDirectionalBlock implements I
             if (fuel != null) {
                 return onBlockEntityUse(worldIn, pos, be -> {
                     if (!worldIn.isClientSide) {
+                        if (be.isCreative())
+                            return InteractionResult.FAIL;
+                        // Special fuel goes to superExperience counter, not the tank
+                        if (fuel.special()) {
+                            be.addSuperExperience(fuel.experience());
+                            if (!player.getAbilities().instabuild) {
+                                heldItem.shrink(1);
+                                fuel.usingConvertTo().ifPresent(remainder -> {
+                                    ItemStack rem = remainder.copy();
+                                    if (heldItem.isEmpty())
+                                        player.setItemInHand(handIn, rem);
+                                    else
+                                        player.getInventory().placeItemBackInInventory(rem);
+                                });
+                            }
+                            return InteractionResult.sidedSuccess(worldIn.isClientSide);
+                        }
+                        // Normal fuel fills the tank
                         var tank = be.internalTank.getPrimaryHandler();
                         var currentFluid = tank.getFluid();
-                        var targetFluid = fuel.special()
-                                ? new net.minecraftforge.fluids.FluidStack(CeiFluids.HYPER_EXPERIENCE.get().getSource(), fuel.experience())
-                                : new net.minecraftforge.fluids.FluidStack(CeiFluids.EXPERIENCE.get().getSource(), fuel.experience());
+                        var targetFluid = new net.minecraftforge.fluids.FluidStack(CeiFluids.EXPERIENCE.get().getSource(), fuel.experience());
                         // Check fluid compatibility and capacity
                         if (!currentFluid.isEmpty() && !currentFluid.isFluidEqual(targetFluid))
                             return InteractionResult.FAIL;

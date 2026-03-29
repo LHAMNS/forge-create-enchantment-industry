@@ -83,6 +83,12 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     int processingTicks;
     /** Whether this enchanter is in "cursed" mode (hyper mode with lightning rod deflecting lightning). */
     protected boolean cursed;
+    /** Internal super experience counter - filled by special ExperienceFuel items, not piped in. */
+    protected int superExperience;
+    /** Whether this enchanter has infinite liquid (Creative Blaze Cake applied). */
+    protected boolean isCreative;
+    /** Seed for deterministic enchantment randomization. Updated after each enchanting operation. */
+    protected long enchantmentSeed;
     Map<Direction, LazyOptional<EnchantingItemHandler>> itemHandlers;
     boolean sendParticles;
     LerpedFloat headAnimation;
@@ -108,6 +114,9 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
                         .orElse(Direction.SOUTH)) + 180) % 360
         );
         goggles = false;
+        enchantmentSeed = pos.asLong();
+        superExperience = 0;
+        isCreative = false;
     }
 
     @Override
@@ -395,10 +404,13 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
                     : CeiFluids.EXPERIENCE.get().getSource(), cost);
 
             if (processingTicks > 5) {
-                var tankFluid = internalTank.getPrimaryHandler().getFluid().getFluid();
-                if ((!CeiFluids.EXPERIENCE.is(tankFluid) && !CeiFluids.HYPER_EXPERIENCE.is(tankFluid) ||
-                        internalTank.getPrimaryHandler().getFluidAmount() < exp.getAmount())) {
-                    processingTicks = ENCHANTING_TIME;
+                if (!isCreative) {
+                    boolean hasSuperExp = hyper && superExperience >= cost;
+                    var tankFluid = internalTank.getPrimaryHandler().getFluid().getFluid();
+                    if (!hasSuperExp && (!CeiFluids.EXPERIENCE.is(tankFluid) && !CeiFluids.HYPER_EXPERIENCE.is(tankFluid) ||
+                            internalTank.getPrimaryHandler().getFluidAmount() < exp.getAmount())) {
+                        processingTicks = ENCHANTING_TIME;
+                    }
                 }
                 return true;
             }
@@ -419,7 +431,8 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
             if (cursed) {
                 Enchanting.applyCurseEnchantment(heldItem.stack, random);
             }
-            internalTank.getPrimaryHandler().drain(exp, IFluidHandler.FluidAction.EXECUTE);
+            consumeExperience(cost, hyper);
+            advanceEnchantmentSeed();
             // Consume the template item to prevent infinite reuse (item duplication)
             templateItem.shrink(1);
             if (templateItem.isEmpty()) {
@@ -445,10 +458,13 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         );
 
         if (processingTicks > 5) {
-            var tankFluid = internalTank.getPrimaryHandler().getFluid().getFluid();
-            if ((!CeiFluids.EXPERIENCE.is(tankFluid) && !CeiFluids.HYPER_EXPERIENCE.is(tankFluid) ||
-                    internalTank.getPrimaryHandler().getFluidAmount() < exp.getAmount())) {
-                processingTicks = ENCHANTING_TIME;
+            if (!isCreative) {
+                boolean hasSuperExp = hyper && superExperience >= exp.getAmount();
+                var tankFluid = internalTank.getPrimaryHandler().getFluid().getFluid();
+                if (!hasSuperExp && (!CeiFluids.EXPERIENCE.is(tankFluid) && !CeiFluids.HYPER_EXPERIENCE.is(tankFluid) ||
+                        internalTank.getPrimaryHandler().getFluidAmount() < exp.getAmount())) {
+                    processingTicks = ENCHANTING_TIME;
+                }
             }
             return true;
         }
@@ -476,7 +492,8 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         if (cursed) {
             Enchanting.applyCurseEnchantment(heldItem.stack, random);
         }
-        internalTank.getPrimaryHandler().drain(exp, IFluidHandler.FluidAction.EXECUTE);
+        consumeExperience(exp.getAmount(), hyper);
+        advanceEnchantmentSeed();
         sendParticles = true;
         notifyUpdate();
         return true;
@@ -617,7 +634,61 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     }
 
     public boolean hyper() {
-        return CeiFluids.HYPER_EXPERIENCE.is(internalTank.getPrimaryHandler().getFluid().getFluid());
+        return superExperience > 0 || CeiFluids.HYPER_EXPERIENCE.is(internalTank.getPrimaryHandler().getFluid().getFluid());
+    }
+
+    /** Get the internal super experience counter value. */
+    public int getSuperExperience() {
+        return superExperience;
+    }
+
+    /** Add super experience from a special ExperienceFuel item. */
+    public void addSuperExperience(int amount) {
+        this.superExperience += amount;
+        notifyUpdate();
+    }
+
+    /** Whether this enchanter has creative (infinite) mode enabled. */
+    public boolean isCreative() {
+        return isCreative;
+    }
+
+    /** Apply creative mode (from Creative Blaze Cake). */
+    public void applyCreativeMode() {
+        this.isCreative = true;
+        notifyUpdate();
+    }
+
+    /** Get the enchantment seed for deterministic randomization. */
+    public long getEnchantmentSeed() {
+        return enchantmentSeed;
+    }
+
+    /** Advance the enchantment seed after each enchanting operation. */
+    protected void advanceEnchantmentSeed() {
+        enchantmentSeed = enchantmentSeed * 6364136223846793005L + 1442695040888963407L;
+    }
+
+    /**
+     * Consume experience for enchanting. Prefers superExperience for hyper enchanting.
+     * If creative mode, always succeeds without draining.
+     * @return true if enough experience was available
+     */
+    protected boolean consumeExperience(int amount, boolean hyper) {
+        if (isCreative) return true;
+        if (hyper && superExperience >= amount) {
+            superExperience -= amount;
+            return true;
+        }
+        // Fall back to tank
+        FluidStack exp = new FluidStack(hyper
+                ? CeiFluids.HYPER_EXPERIENCE.get().getSource()
+                : CeiFluids.EXPERIENCE.get().getSource(), amount);
+        if (internalTank.getPrimaryHandler().getFluidAmount() >= amount) {
+            internalTank.getPrimaryHandler().drain(exp, IFluidHandler.FluidAction.EXECUTE);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -626,6 +697,9 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         compoundTag.putInt("ProcessingTicks", processingTicks);
         compoundTag.put("TargetItem", targetItem.serializeNBT());
         compoundTag.putBoolean("Goggles", goggles);
+        compoundTag.putInt("SuperExperience", superExperience);
+        compoundTag.putBoolean("IsCreative", isCreative);
+        compoundTag.putLong("EnchantmentSeed", enchantmentSeed);
         if (!templateItem.isEmpty())
             compoundTag.put("TemplateItem", templateItem.serializeNBT());
         if (heldItem != null)
@@ -650,6 +724,9 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         processingTicks = compoundTag.getInt("ProcessingTicks");
         targetItem = ItemStack.of(compoundTag.getCompound("TargetItem"));
         goggles = compoundTag.getBoolean("Goggles");
+        superExperience = compoundTag.getInt("SuperExperience");
+        isCreative = compoundTag.getBoolean("IsCreative");
+        enchantmentSeed = compoundTag.contains("EnchantmentSeed") ? compoundTag.getLong("EnchantmentSeed") : worldPosition.asLong();
         if (compoundTag.contains("TemplateItem")) {
             templateItem = ItemStack.of(compoundTag.getCompound("TemplateItem"));
             if (!templateItem.isEmpty() && templateItem.isEnchantable()) {

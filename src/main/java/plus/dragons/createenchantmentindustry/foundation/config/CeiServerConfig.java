@@ -84,6 +84,53 @@ public class CeiServerConfig extends ConfigBase {
             "deployerMendItem",
             Comments.deployerMendItem);
 
+    // Blaze Enchanter limits
+    public final ConfigInt blazeEnchanterMaxEnchantLevel = i(30, 1,
+            "blazeEnchanterMaxEnchantLevel",
+            Comments.blazeEnchanterMaxEnchantLevel);
+    public final ConfigInt blazeEnchanterMaxSuperEnchantLevel = i(60, 1,
+            "blazeEnchanterMaxSuperEnchantLevel",
+            Comments.blazeEnchanterMaxSuperEnchantLevel);
+    public final ConfigBool ignoreEnchantmentCompatibility = b(true,
+            "ignoreEnchantmentCompatibility",
+            Comments.ignoreEnchantmentCompatibility);
+
+    // Deployer scales
+    public final ConfigFloat deployerKillXpScale = f(1.0f, 0, 100,
+            "deployerKillXpScale",
+            Comments.deployerKillXpScale);
+    public final ConfigFloat deployerMineXpScale = f(1.0f, 0, 100,
+            "deployerMineXpScale",
+            Comments.deployerMineXpScale);
+    public final ConfigBool deployerSweepAttack = b(true,
+            "deployerSweepAttack",
+            Comments.deployerSweepAttack);
+
+    // Crushing wheel
+    public final ConfigBool crushingWheelKillDropXp = b(true,
+            "crushingWheelKillDropXp",
+            Comments.crushingWheelKillDropXp);
+
+    // Printer toggles and settings
+    public final ConfigBool enableWrittenBookPrinting = b(true,
+            "enableWrittenBookPrinting",
+            Comments.enableWrittenBookPrinting);
+    public final ConfigBool enableEnchantedBookPrinting = b(true,
+            "enableEnchantedBookPrinting",
+            Comments.enableEnchantedBookPrinting);
+    public final ConfigBool enableNameTagPrinting = b(true,
+            "enableNameTagPrinting",
+            Comments.enableNameTagPrinting);
+    public final ConfigBool enableSchedulePrinting = b(true,
+            "enableSchedulePrinting",
+            Comments.enableSchedulePrinting);
+    public final ConfigInt printingProcessingTime = i(50, 1, 1000,
+            "printingProcessingTime",
+            Comments.printingProcessingTime);
+    public final ConfigInt printingGenerationChange = i(-1, -3, 1,
+            "printingGenerationChange",
+            Comments.printingGenerationChange);
+
     // Experience Lantern
     public final ConfigInt experienceLanternFluidCapacity = i(1000, 100,
             "experienceLanternFluidCapacity",
@@ -150,6 +197,32 @@ public class CeiServerConfig extends ConfigBase {
                 "Whether Deployer should collect Experience Nuggets instead of dropping XP orbs";
         static String deployerMendItem =
                 "Whether Deployer should attempt to mend its held item with collected XP";
+        static String blazeEnchanterMaxEnchantLevel =
+                "Maximum enchantment level the Blaze Enchanter can apply (vanilla table equivalent)";
+        static String blazeEnchanterMaxSuperEnchantLevel =
+                "Maximum enchantment level the Blaze Enchanter can apply when using Super Experience";
+        static String ignoreEnchantmentCompatibility =
+                "Whether the Blaze Enchanter ignores enchantment compatibility rules (allows conflicting enchantments)";
+        static String deployerKillXpScale =
+                "Scale factor for XP dropped when a Deployer kills an entity";
+        static String deployerMineXpScale =
+                "Scale factor for XP dropped when a Deployer mines a block";
+        static String deployerSweepAttack =
+                "Whether the Deployer can perform sweep attacks";
+        static String crushingWheelKillDropXp =
+                "Whether entities killed by Crushing Wheels drop Experience Nuggets";
+        static String enableWrittenBookPrinting =
+                "Whether the Printer can copy Written Books";
+        static String enableEnchantedBookPrinting =
+                "Whether the Printer can copy Enchanted Books";
+        static String enableNameTagPrinting =
+                "Whether the Printer can copy Name Tags";
+        static String enableSchedulePrinting =
+                "Whether the Printer can copy Train Schedules";
+        static String printingProcessingTime =
+                "The time in ticks for the Printer to complete one copy operation";
+        static String printingGenerationChange =
+                "Generation change applied when copying Written Books (-3 to 1). -1 means the copy is one generation older.";
         static String experienceLanternFluidCapacity =
                 "The amount of liquid an Experience Lantern can hold (mB)";
         static String experienceLanternDrainRate =

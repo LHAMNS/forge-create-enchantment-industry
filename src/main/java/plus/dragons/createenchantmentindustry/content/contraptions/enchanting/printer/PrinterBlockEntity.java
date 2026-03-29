@@ -50,7 +50,7 @@ import static plus.dragons.createenchantmentindustry.EnchantmentIndustry.LANG;
 
 public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleInformation {
 
-    public static final int COPYING_TIME = 100;
+    public static final int COPYING_TIME_DEFAULT = 100;
     protected BeltProcessingBehaviour beltProcessing;
     public int processingTicks;
     SmartFluidTankBehaviour tank;
@@ -170,7 +170,7 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             return HOLD;
 
         if (processingTicks == -1) {
-            processingTicks = COPYING_TIME;
+            processingTicks = CeiConfigs.SERVER.printingProcessingTime.get();
             notifyUpdate();
             return HOLD;
         }

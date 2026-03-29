@@ -143,12 +143,88 @@ public class CeiAdvancements {
             .icon(Items.DIAMOND_HELMET)
             .parent(ADDITIONAL_ORDER)
             .build(),
+    // Blaze Enchanter - additional advancements
+    SIGIL_FORGING = ADVANCEMENT_FACTORY.builder("sigil_forging")
+            .title("Sigil Forging")
+            .description("Add a new enchantment to an Enchanting Template using a Blaze Enchanter")
+            .icon(CeiItems.ENCHANTING_GUIDE)
+            .parent(ADDITIONAL_ORDER)
+            .build(),
+    THOUSAND_RUNES = ADVANCEMENT_FACTORY.builder("thousand_runes")
+            .title("Thousand Runes")
+            .description("Use a Blaze Enchanter 1,000 times")
+            .icon(CeiBlocks.BLAZE_ENCHANTER)
+            .announce(true)
+            .frame(FrameType.CHALLENGE)
+            .parent(SIGIL_FORGING)
+            .build(),
     // Blaze Forger Branch
     BLAZING_FUSION = ADVANCEMENT_FACTORY.builder("blazing_fusion")
             .title("Blazing Fusion")
             .description("Merge two enchanted items or books using the Blaze Forger")
             .icon(Items.ANVIL)
             .parent(BLAZES_NEW_JOB)
+            .build(),
+    SIGIL_CASTING = ADVANCEMENT_FACTORY.builder("sigil_casting")
+            .title("Sigil Casting")
+            .description("Apply an Enchanting Template using a Blaze Forger")
+            .icon(CeiItems.ENCHANTING_GUIDE)
+            .parent(BLAZING_FUSION)
+            .build(),
+    MAGIC_UNBINDING = ADVANCEMENT_FACTORY.builder("magic_unbinding")
+            .title("Magic Unbinding")
+            .description("Strip an item's enchantment off using a Blaze Forger")
+            .icon(Items.ENCHANTED_BOOK)
+            .parent(SIGIL_CASTING)
+            .build(),
+    BLAZING_CENTURION = ADVANCEMENT_FACTORY.builder("blazing_centurion")
+            .title("Blazing Centurion")
+            .description("Use a Blaze Forger 1,000 times")
+            .icon(Items.ANVIL)
+            .announce(true)
+            .frame(FrameType.CHALLENGE)
+            .parent(MAGIC_UNBINDING)
+            .build(),
+    // Super Enchant Branch
+    LIGHTNING_CATALYSIS = ADVANCEMENT_FACTORY.builder("lightning_catalysis")
+            .title("Lightning Catalysis")
+            .description("Obtain Super Experience")
+            .icon(CeiBlocks.SUPER_EXPERIENCE_BLOCK)
+            .announce(true)
+            .frame(FrameType.GOAL)
+            .parent(EXPERIENCED_ENGINEER)
+            .build(),
+    PROBABILITY_SPIKE = ADVANCEMENT_FACTORY.builder("probability_spike")
+            .title("Probability Spike")
+            .description("How did all these treasures get here?")
+            .icon(Items.DIAMOND)
+            .announce(true)
+            .frame(FrameType.GOAL)
+            .parent(LIGHTNING_CATALYSIS)
+            .build(),
+    TRANSCENDENT_OVERCLOCK = ADVANCEMENT_FACTORY.builder("transcendent_overclock")
+            .title("Transcendent Overclock")
+            .description("How is this possible? Enchantment level caps don't exist?")
+            .icon(Items.EMERALD)
+            .announce(true)
+            .frame(FrameType.GOAL)
+            .parent(PROBABILITY_SPIKE)
+            .build(),
+    PARADOX_FUSION = ADVANCEMENT_FACTORY.builder("paradox_fusion")
+            .title("Paradox Fusion")
+            .description("How is this possible? They shouldn't appear at the same time!")
+            .icon(Items.REDSTONE)
+            .announce(true)
+            .frame(FrameType.GOAL)
+            .parent(TRANSCENDENT_OVERCLOCK)
+            .build(),
+    OMNI_ENCHANTER = ADVANCEMENT_FACTORY.builder("omni_enchanter")
+            .title("Omni-Enchanter")
+            .description("Super Enchant 100 times")
+            .icon(Items.NETHER_STAR)
+            .announce(true)
+            .frame(FrameType.CHALLENGE)
+            .parent(PARADOX_FUSION)
             .build(),
     // OSHA Violation - Lightning destroys the machine
     OSHA_VIOLATION = ADVANCEMENT_FACTORY.builder("osha_violation")
@@ -157,7 +233,15 @@ public class CeiAdvancements {
             .icon(Items.BARRIER)
             .announce(true)
             .frame(FrameType.GOAL)
-            .parent(HYPOTHETICAL_EXTENSION)
+            .parent(LIGHTNING_CATALYSIS)
+            .build(),
+    // Mechanical Grindstone Branch
+    GRIND_TO_POLISH = ADVANCEMENT_FACTORY.builder("grind_to_polish")
+            .title("Grind to Polish")
+            .description("Sandpaper? I've got a better one")
+            .icon(AllBlocks.MECHANICAL_PUMP)
+            .announce(true)
+            .parent(GONE_WITH_THE_FOIL)
             .build(),
     END = null;
     

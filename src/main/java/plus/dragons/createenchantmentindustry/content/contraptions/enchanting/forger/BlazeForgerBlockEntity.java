@@ -64,6 +64,12 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
     SmartFluidTankBehaviour internalTank;
     protected int processingTime = -1;
     protected boolean cursed;
+    /** Internal super experience counter - filled by special ExperienceFuel items. */
+    protected int superExperience;
+    /** Whether this forger has infinite liquid (Creative Blaze Cake applied). */
+    protected boolean isCreative;
+    /** Seed for deterministic randomization. Updated after each forging operation. */
+    protected long enchantmentSeed;
     protected final BlazeForgerInventory inventory;
 
     // Client-side animation
@@ -73,6 +79,9 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
     public BlazeForgerBlockEntity(BlockEntityType<?> type, BlockPos pos, BlockState state) {
         super(type, pos, state);
         this.inventory = new BlazeForgerInventory(this);
+        this.superExperience = 0;
+        this.isCreative = false;
+        this.enchantmentSeed = pos.asLong();
         headAnimation = LerpedFloat.linear();
         headAngle = LerpedFloat.angular();
         headAngle.startWithValue((AngleHelper
@@ -166,6 +175,7 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
             }
             // Forging complete
             consumeExperience(cost);
+            advanceEnchantmentSeed();
             processingTime = -1;
             inventory.applyResult();
             award(CeiAdvancements.BLAZING_FUSION.asCreateAdvancement());
@@ -285,6 +295,10 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
     }
 
     protected boolean canConsumeExperience(int amount) {
+        if (isCreative) return true;
+        // Check superExperience first for hyper mode
+        if (hyper() && superExperience >= amount)
+            return true;
         var tankFluid = internalTank.getPrimaryHandler().getFluid().getFluid();
         if (!CeiFluids.EXPERIENCE.is(tankFluid) && !CeiFluids.HYPER_EXPERIENCE.is(tankFluid))
             return false;
@@ -292,10 +306,43 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
     }
 
     protected void consumeExperience(int amount) {
+        if (isCreative) return;
+        // Prefer superExperience for hyper mode
+        if (hyper() && superExperience >= amount) {
+            superExperience -= amount;
+            return;
+        }
         FluidStack exp = new FluidStack(
                 hyper() ? CeiFluids.HYPER_EXPERIENCE.get().getSource() : CeiFluids.EXPERIENCE.get().getSource(),
                 amount);
         internalTank.getPrimaryHandler().drain(exp, IFluidHandler.FluidAction.EXECUTE);
+    }
+
+    /** Get the internal super experience counter. */
+    public int getSuperExperience() {
+        return superExperience;
+    }
+
+    /** Add super experience from a special ExperienceFuel item. */
+    public void addSuperExperience(int amount) {
+        this.superExperience += amount;
+        notifyUpdate();
+    }
+
+    /** Whether this forger has creative (infinite) mode enabled. */
+    public boolean isCreative() {
+        return isCreative;
+    }
+
+    /** Apply creative mode (from Creative Blaze Cake). */
+    public void applyCreativeMode() {
+        this.isCreative = true;
+        notifyUpdate();
+    }
+
+    /** Advance the enchantment seed after each forging operation. */
+    protected void advanceEnchantmentSeed() {
+        enchantmentSeed = enchantmentSeed * 6364136223846793005L + 1442695040888963407L;
     }
 
     public ItemStack insertItem(ItemStack stack, boolean simulate) {
@@ -335,6 +382,9 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
     public void write(CompoundTag compoundTag, boolean clientPacket) {
         super.write(compoundTag, clientPacket);
         compoundTag.putInt("ProcessingTime", processingTime);
+        compoundTag.putInt("SuperExperience", superExperience);
+        compoundTag.putBoolean("IsCreative", isCreative);
+        compoundTag.putLong("EnchantmentSeed", enchantmentSeed);
         compoundTag.put("Inventory", inventory.serializeNBT());
     }
 
@@ -342,6 +392,9 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
     protected void read(CompoundTag compoundTag, boolean clientPacket) {
         super.read(compoundTag, clientPacket);
         processingTime = compoundTag.getInt("ProcessingTime");
+        superExperience = compoundTag.getInt("SuperExperience");
+        isCreative = compoundTag.getBoolean("IsCreative");
+        enchantmentSeed = compoundTag.contains("EnchantmentSeed") ? compoundTag.getLong("EnchantmentSeed") : worldPosition.asLong();
         inventory.deserializeNBT(compoundTag.getCompound("Inventory"));
     }
 
