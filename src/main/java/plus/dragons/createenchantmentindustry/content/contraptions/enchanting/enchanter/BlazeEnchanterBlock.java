@@ -213,8 +213,10 @@ public class BlazeEnchanterBlock extends HorizontalDirectionalBlock implements I
                 } else if (AllItems.GOGGLES.isIn(heldItem)) {
                     if (te.goggles)
                         return InteractionResult.PASS;
-                    te.goggles = true;
-                    te.notifyUpdate();
+                    if (!worldIn.isClientSide) {
+                        te.goggles = true;
+                        te.notifyUpdate();
+                    }
                     return InteractionResult.SUCCESS;
                 }
                 else return InteractionResult.PASS;
@@ -241,8 +243,10 @@ public class BlazeEnchanterBlock extends HorizontalDirectionalBlock implements I
                 }
                 if (!te.goggles)
                     return InteractionResult.PASS;
-                te.goggles = false;
-                te.notifyUpdate();
+                if (!worldIn.isClientSide) {
+                    te.goggles = false;
+                    te.notifyUpdate();
+                }
                 return InteractionResult.SUCCESS;
             });
         }
