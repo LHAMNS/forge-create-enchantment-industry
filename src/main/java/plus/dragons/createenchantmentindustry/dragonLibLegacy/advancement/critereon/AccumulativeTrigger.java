@@ -34,7 +34,10 @@ public class AccumulativeTrigger extends SimpleCriterionTrigger<AccumulativeTrig
     }
 
     public void trigger(Player pPlayer, int change){
-        this.trigger((ServerPlayer) pPlayer, (triggerInstance) -> triggerInstance.matches(id, pPlayer, change));
+        // Accumulate progress once, then check all trigger instances without side effects
+        AccumulativeData data = get(pPlayer.level());
+        data.change(id, pPlayer.getUUID(), change);
+        this.trigger((ServerPlayer) pPlayer, (triggerInstance) -> triggerInstance.matches(id, pPlayer));
     }
 
     @Override
@@ -113,13 +116,7 @@ public class AccumulativeTrigger extends SimpleCriterionTrigger<AccumulativeTrig
             this.requirement = requirement;
         }
 
-        public void addProgress(ResourceLocation resourceLocation, Player player, int change) {
-            AccumulativeData data = get(player.level());
-            data.change(resourceLocation, player.getUUID(), change);
-        }
-
-        public boolean matches(ResourceLocation resourceLocation, Player player, int change) {
-            addProgress(resourceLocation, player, change);
+        public boolean matches(ResourceLocation resourceLocation, Player player) {
             AccumulativeData data = get(player.level());
             return requirement.matches(data.get(resourceLocation, player.getUUID()));
         }

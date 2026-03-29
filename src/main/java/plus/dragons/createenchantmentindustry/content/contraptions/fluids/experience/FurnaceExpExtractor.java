@@ -32,7 +32,7 @@ public class FurnaceExpExtractor implements IFluidHandler{
                         result.addAndGet(cookingRecipe.getExperience() * entry.getIntValue());
             });
         }
-        return (int) Math.floor(result.floatValue());
+        return (int) Math.floor(result.doubleValue());
     }
 
     @Override
@@ -83,21 +83,23 @@ public class FurnaceExpExtractor implements IFluidHandler{
             if (action.execute()) recipesUsed.clear();
             return new FluidStack(CeiFluids.EXPERIENCE.get(), total);
         }
-        // Efficient mathematical approach: iterate recipe entries with counts, no ArrayList expansion
-        float result = 0;
-        var it = new java.util.ArrayList<>(recipesUsed.object2IntEntrySet());
+        // Efficient mathematical approach: iterate entries directly with counts
+        double result = 0;
         Object2IntOpenHashMap<ResourceLocation> remaining = new Object2IntOpenHashMap<>();
         boolean budgetExhausted = false;
-        for (var entry : it) {
+        for (var entry : recipesUsed.object2IntEntrySet()) {
             var recipeOpt = BE.getLevel().getRecipeManager().byKey(entry.getKey());
             if (recipeOpt.isEmpty()) continue;
             if (!(recipeOpt.get() instanceof AbstractCookingRecipe cookingRecipe)) continue;
-            float expPerItem = cookingRecipe.getExperience();
+            double expPerItem = cookingRecipe.getExperience();
             int count = entry.getIntValue();
             if (budgetExhausted) {
                 remaining.put(entry.getKey(), count);
+            } else if (expPerItem <= 0) {
+                // Zero-XP recipes: skip but preserve
+                remaining.put(entry.getKey(), count);
             } else {
-                int canDrain = (int) Math.min(count, Math.floor((maxDrain - result) / Math.max(expPerItem, 0.001f)));
+                int canDrain = (int) Math.min(count, Math.floor((maxDrain - result) / expPerItem));
                 result += canDrain * expPerItem;
                 int leftover = count - canDrain;
                 if (leftover > 0) {

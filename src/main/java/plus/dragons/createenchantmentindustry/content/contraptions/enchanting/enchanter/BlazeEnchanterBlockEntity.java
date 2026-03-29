@@ -90,6 +90,8 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     protected boolean isCreative;
     /** Seed for deterministic enchantment randomization. Updated after each enchanting operation. */
     protected long enchantmentSeed;
+    /** Snapshotted cost coefficient at processing start, to prevent mid-processing config changes. */
+    protected float snapshotCostCoefficient = 1.0f;
     /** ScrollValue-based enchant level (0 = not set, 1-maxLevel). Equivalent to upstream's EnchanterBehaviour value. */
     protected int enchantLevel;
     /** The EnchanterBehaviour (ScrollValueBehaviour) for scroll-wheel enchant level selection. */
@@ -323,6 +325,10 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
             if (onClient)
                 return;
             processingTicks = ENCHANTING_TIME;
+            // Snapshot cost coefficient at processing start
+            snapshotCostCoefficient = hyper()
+                    ? CeiConfigs.SERVER.hyperEnchantByBlazeEnchanterCostCoefficient.getF()
+                    : CeiConfigs.SERVER.enchantByBlazeEnchanterCostCoefficient.getF();
             sendData();
         }
 
@@ -442,9 +448,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
             if (!enchantingBehaviour.canProcess(heldItem.stack, targetItem, hyper))
                 return false;
 
-            int cost = (int) (enchantingBehaviour.getExperienceCost(targetItem, hyper) *
-                    (hyper ? CeiConfigs.SERVER.hyperEnchantByBlazeEnchanterCostCoefficient.get() :
-                            CeiConfigs.SERVER.enchantByBlazeEnchanterCostCoefficient.get()));
+            int cost = (int) (enchantingBehaviour.getExperienceCost(targetItem, hyper) * snapshotCostCoefficient);
             FluidStack exp = new FluidStack(hyper
                     ? CeiFluids.HYPER_EXPERIENCE.get().getSource()
                     : CeiFluids.EXPERIENCE.get().getSource(), cost);
@@ -758,6 +762,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         compoundTag.putBoolean("IsCreative", isCreative);
         compoundTag.putLong("EnchantmentSeed", enchantmentSeed);
         compoundTag.putInt("EnchantLevel", enchantLevel);
+        compoundTag.putFloat("SnapshotCostCoeff", snapshotCostCoefficient);
         if (!templateItem.isEmpty())
             compoundTag.put("TemplateItem", templateItem.serializeNBT());
         if (heldItem != null)
@@ -786,6 +791,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         isCreative = compoundTag.getBoolean("IsCreative");
         enchantmentSeed = compoundTag.contains("EnchantmentSeed") ? compoundTag.getLong("EnchantmentSeed") : worldPosition.asLong();
         enchantLevel = compoundTag.getInt("EnchantLevel");
+        snapshotCostCoefficient = compoundTag.contains("SnapshotCostCoeff") ? compoundTag.getFloat("SnapshotCostCoeff") : 1.0f;
         if (compoundTag.contains("TemplateItem")) {
             templateItem = ItemStack.of(compoundTag.getCompound("TemplateItem"));
             if (!templateItem.isEmpty() && templateItem.isEnchantable()) {

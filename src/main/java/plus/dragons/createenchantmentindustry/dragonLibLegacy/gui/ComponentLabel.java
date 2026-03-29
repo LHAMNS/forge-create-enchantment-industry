@@ -73,7 +73,7 @@ public class ComponentLabel extends Label {
                 break;
             }
             StringBuilder builder = new StringBuilder(content);
-            for (int i = startIndex; i != endIndex; i += step) {
+            for (int i = startIndex; trimFront ? i <= endIndex : i >= endIndex; i += step) {
                 String sub = builder.substring(trimFront ? i : startIndex, trimFront ? endIndex + 1 : i + 1);
                 if (font.width(Component.literal(sub).setStyle(text.getStyle())) <= maxWidthPx) {
                     result.add(Component.literal(sub).setStyle(text.getStyle()));
