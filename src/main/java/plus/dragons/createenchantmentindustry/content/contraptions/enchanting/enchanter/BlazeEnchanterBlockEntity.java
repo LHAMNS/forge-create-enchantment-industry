@@ -390,6 +390,12 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
             // Process finished - apply template enchanting
             enchantingBehaviour.applyEnchantment(heldItem.stack, targetItem, hyper);
             internalTank.getPrimaryHandler().drain(exp, IFluidHandler.FluidAction.EXECUTE);
+            // Consume the template item to prevent infinite reuse (item duplication)
+            templateItem.shrink(1);
+            if (templateItem.isEmpty()) {
+                templateItem = ItemStack.EMPTY;
+                enchantingBehaviour = new EnchantingBehaviour();
+            }
             sendParticles = true;
             notifyUpdate();
             return true;

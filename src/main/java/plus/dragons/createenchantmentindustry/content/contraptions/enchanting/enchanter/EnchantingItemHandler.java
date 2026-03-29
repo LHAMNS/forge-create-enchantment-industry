@@ -6,7 +6,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
-import org.antlr.v4.runtime.misc.NotNull;
+import javax.annotation.Nonnull;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -27,13 +27,13 @@ public class EnchantingItemHandler implements IItemHandler {
     }
 
     @Override
-    @NotNull
+    @Nonnull
     public ItemStack getStackInSlot(int slot) {
         return be.getHeldItemStack();
     }
 
     @Override
-    @NotNull
+    @Nonnull
     public ItemStack insertItem(int slot, ItemStack stack, boolean simulate) {
         if (!be.getHeldItemStack()
                 .isEmpty())
@@ -57,7 +57,7 @@ public class EnchantingItemHandler implements IItemHandler {
     }
 
     @Override
-    @NotNull
+    @Nonnull
     public ItemStack extractItem(int slot, int amount, boolean simulate) {
         TransportedItemStack held = be.heldItem;
         if (held == null)

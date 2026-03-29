@@ -30,7 +30,7 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
-import org.antlr.v4.runtime.misc.NotNull;
+import javax.annotation.Nonnull;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.FilteringFluidTankBehaviour;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
 import plus.dragons.createenchantmentindustry.entry.CeiTags;
@@ -95,7 +95,7 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         return copyTarget;
     }
 
-    public void setCopyTarget(@NotNull ItemStack copyTarget) {
+    public void setCopyTarget(@Nonnull ItemStack copyTarget) {
         if(copyTarget.isEmpty()) {
             this.copyTarget = null;
             tooExpensive = false;
@@ -273,7 +273,7 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     }
 
     @Override
-    @NotNull
+    @Nonnull
     public <T> LazyOptional<T> getCapability(Capability<T> cap, @Nullable Direction side) {
         if (cap == ForgeCapabilities.FLUID_HANDLER && side != Direction.DOWN)
             return tank.getCapability()

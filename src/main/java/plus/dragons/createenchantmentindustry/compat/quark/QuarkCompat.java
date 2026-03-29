@@ -14,7 +14,7 @@ import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.ModList;
 import net.minecraftforge.registries.ForgeRegistries;
-import org.antlr.v4.runtime.misc.NotNull;
+import javax.annotation.Nonnull;
 import plus.dragons.createenchantmentindustry.EnchantmentIndustry;
 import plus.dragons.createenchantmentindustry.api.PrintEntryRegisterEvent;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.Enchanting;
@@ -39,41 +39,41 @@ public class QuarkCompat {
 
             private final ResourceLocation id = new ResourceLocation("quark","ancient_tome");
             @Override
-            public @NotNull ResourceLocation id() {
+            public @Nonnull ResourceLocation id() {
                 return EnchantmentIndustry.genRL("ancient_tome");
             }
 
             @SuppressWarnings("all")
             @Override
-            public boolean match(@NotNull ItemStack toPrint) {
+            public boolean match(@Nonnull ItemStack toPrint) {
                 return ForgeRegistries.ITEMS.getHolder(toPrint.getItem()).get().is(id);
             }
 
             @Override
-            public boolean valid(@NotNull ItemStack target, @NotNull ItemStack tested) {
+            public boolean valid(@Nonnull ItemStack target, @Nonnull ItemStack tested) {
                 return tested.is(Items.ENCHANTED_BOOK);
             }
 
             @SuppressWarnings("all")
             @Override
-            public int requiredInkAmount(@NotNull ItemStack target) {
+            public int requiredInkAmount(@Nonnull ItemStack target) {
                 var enchantment = getTomeEnchantment(target);
                 if(enchantment==null) return 50;
                 return enchantment.getMinCost(1) + Enchanting.rarityLevel(enchantment.getRarity());
             }
 
             @Override
-            public @NotNull Fluid requiredInkType(@NotNull ItemStack target) {
+            public @Nonnull Fluid requiredInkType(@Nonnull ItemStack target) {
                 return CeiFluids.HYPER_EXPERIENCE.get();
             }
 
             @Override
-            public boolean isTooExpensive(@NotNull ItemStack target, int limit) {
+            public boolean isTooExpensive(@Nonnull ItemStack target, int limit) {
                 return limit<requiredInkAmount(target);
             }
 
             @Override
-            public void addToGoggleTooltip(@NotNull List<Component> tooltip, boolean isPlayerSneaking, @NotNull ItemStack target) {
+            public void addToGoggleTooltip(@Nonnull List<Component> tooltip, boolean isPlayerSneaking, @Nonnull ItemStack target) {
                 var b = LANG.itemName(target).style(ChatFormatting.DARK_PURPLE);
                 b.forGoggles(tooltip, 1);
                 boolean tooExpensive = Printing.isTooExpensive(this, target, CeiConfigs.SERVER.copierTankCapacity.get());
@@ -93,7 +93,7 @@ public class QuarkCompat {
             }
 
             @Override
-            public @NotNull MutableComponent getDisplaySourceContent(@NotNull ItemStack target) {
+            public @Nonnull MutableComponent getDisplaySourceContent(@Nonnull ItemStack target) {
                 var ret = LANG.itemName(target);
                 var e = getTomeEnchantment(target);
                 if(e!=null){

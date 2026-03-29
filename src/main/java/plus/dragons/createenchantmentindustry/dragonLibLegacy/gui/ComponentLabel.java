@@ -6,7 +6,7 @@ import com.simibubi.create.foundation.gui.widget.Label;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import org.antlr.v4.runtime.misc.NotNull;
+import javax.annotation.Nonnull;
 
 import javax.annotation.Nullable;
 import java.util.*;
@@ -103,7 +103,7 @@ public class ComponentLabel extends Label {
     }
 
     @Override
-    protected void doRender(@NotNull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+    protected void doRender(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         if (text == null)
             return;
         RenderSystem.setShaderColor(1, 1, 1, 1);

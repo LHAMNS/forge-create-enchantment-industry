@@ -9,7 +9,7 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
-import org.antlr.v4.runtime.misc.NotNull;
+import javax.annotation.Nonnull;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class FurnaceExpExtractor implements IFluidHandler{
     }
 
     @Override
-    public @NotNull FluidStack getFluidInTank(int tank) {
+    public @Nonnull FluidStack getFluidInTank(int tank) {
         var total = getTotalExp();
         if (total > 0) return new FluidStack(CeiFluids.EXPERIENCE.get(), total);
         return FluidStack.EMPTY;
@@ -51,7 +51,7 @@ public class FurnaceExpExtractor implements IFluidHandler{
     }
 
     @Override
-    public boolean isFluidValid(int tank, @NotNull FluidStack stack) {
+    public boolean isFluidValid(int tank, @Nonnull FluidStack stack) {
         return stack.getFluid().isSame(CeiFluids.EXPERIENCE.get());
     }
 
@@ -61,7 +61,7 @@ public class FurnaceExpExtractor implements IFluidHandler{
     }
 
     @Override
-    public @NotNull FluidStack drain(FluidStack resource, IFluidHandler.FluidAction action) {
+    public @Nonnull FluidStack drain(FluidStack resource, IFluidHandler.FluidAction action) {
         if (getTotalExp() == 0) {
             return FluidStack.EMPTY;
         } else if (resource.getFluid().isSame(CeiFluids.EXPERIENCE.get())) {
@@ -72,7 +72,7 @@ public class FurnaceExpExtractor implements IFluidHandler{
     }
 
     @Override
-    public @NotNull FluidStack drain(int maxDrain, IFluidHandler.FluidAction action) {
+    public @Nonnull FluidStack drain(int maxDrain, IFluidHandler.FluidAction action) {
         var total = getTotalExp();
         if (total == 0) {
             return FluidStack.EMPTY;

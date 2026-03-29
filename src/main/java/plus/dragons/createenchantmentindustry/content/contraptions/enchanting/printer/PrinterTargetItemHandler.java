@@ -2,7 +2,7 @@ package plus.dragons.createenchantmentindustry.content.contraptions.enchanting.p
 
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.items.IItemHandler;
-import org.antlr.v4.runtime.misc.NotNull;
+import javax.annotation.Nonnull;
 
 public class PrinterTargetItemHandler implements IItemHandler {
     PrinterBlockEntity be;
@@ -17,12 +17,12 @@ public class PrinterTargetItemHandler implements IItemHandler {
     }
 
     @Override
-    public @NotNull ItemStack getStackInSlot(int slot) {
+    public @Nonnull ItemStack getStackInSlot(int slot) {
         return be.getCopyTarget();
     }
 
     @Override
-    public @NotNull ItemStack insertItem(int slot, @NotNull ItemStack stack, boolean simulate) {
+    public @Nonnull ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
         if(!be.getCopyTarget().isEmpty()) return stack;
         if(!isItemValid(slot,stack)) return stack; // Prevent strange crash problem from happening. See #170 log. Chute does not check item validity before insertion.
         else{
@@ -34,7 +34,7 @@ public class PrinterTargetItemHandler implements IItemHandler {
     }
 
     @Override
-    public @NotNull ItemStack extractItem(int slot, int amount, boolean simulate) {
+    public @Nonnull ItemStack extractItem(int slot, int amount, boolean simulate) {
         var ret = be.getCopyTarget().copy();
         if(!simulate){
             be.setCopyTarget(ItemStack.EMPTY);
@@ -48,7 +48,7 @@ public class PrinterTargetItemHandler implements IItemHandler {
     }
 
     @Override
-    public boolean isItemValid(int slot, @NotNull ItemStack stack) {
+    public boolean isItemValid(int slot, @Nonnull ItemStack stack) {
         return Printing.match(stack)!=null;
     }
 }

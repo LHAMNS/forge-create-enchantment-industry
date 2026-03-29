@@ -51,7 +51,7 @@ public class PrintEntries {
             var e9 = new PackagePatternPrintEntry();
             ENTRIES.put(e8.id(), e8);
             ENTRIES.put(e9.id(), e9);
-        } catch (ClassNotFoundException ignored) {
+        } catch (ClassNotFoundException | NoClassDefFoundError ignored) {
             // Package system not available in this Create version
         }
 

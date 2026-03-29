@@ -19,7 +19,9 @@ public class MendingBySpout {
     public static int getRequiredAmountForItem(Level world, ItemStack stack, FluidStack availableFluid) {
         if (!(CeiFluids.EXPERIENCE.is(availableFluid.getFluid()) && canItemBeMended(world, stack)))
             return -1;
-        return Math.min(availableFluid.getAmount(), Mth.ceil(stack.getDamageValue() / stack.getXpRepairRatio()));
+        float ratio = stack.getXpRepairRatio();
+        if (ratio <= 0) return -1;
+        return Math.min(availableFluid.getAmount(), Mth.ceil(stack.getDamageValue() / ratio));
     }
     
     @Nullable

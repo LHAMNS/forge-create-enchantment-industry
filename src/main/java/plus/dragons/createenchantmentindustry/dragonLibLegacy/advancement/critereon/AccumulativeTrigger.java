@@ -14,7 +14,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.saveddata.SavedData;
 import net.minecraft.world.level.storage.DimensionDataStorage;
-import org.antlr.v4.runtime.misc.NotNull;
+import javax.annotation.Nonnull;
 
 import java.util.UUID;
 
@@ -27,8 +27,8 @@ public class AccumulativeTrigger extends SimpleCriterionTrigger<AccumulativeTrig
     }
 
     @Override
-    @NotNull
-    protected TriggerInstance createInstance(JsonObject pJson, @NotNull ContextAwarePredicate player, @NotNull DeserializationContext pContext) {
+    @Nonnull
+    protected TriggerInstance createInstance(JsonObject pJson, @Nonnull ContextAwarePredicate player, @Nonnull DeserializationContext pContext) {
         MinMaxBounds.Ints requirements = MinMaxBounds.Ints.fromJson(pJson.get("requirement"));
         return new TriggerInstance(id, player, requirements);
     }
@@ -38,7 +38,7 @@ public class AccumulativeTrigger extends SimpleCriterionTrigger<AccumulativeTrig
     }
 
     @Override
-    @NotNull
+    @Nonnull
     public ResourceLocation getId() {
         return id;
     }
@@ -118,8 +118,8 @@ public class AccumulativeTrigger extends SimpleCriterionTrigger<AccumulativeTrig
         }
 
         @Override
-        @NotNull
-        public JsonObject serializeToJson(@NotNull SerializationContext pConditions) {
+        @Nonnull
+        public JsonObject serializeToJson(@Nonnull SerializationContext pConditions) {
             JsonObject jsonObject = super.serializeToJson(pConditions);
             jsonObject.add("requirement", requirement.serializeToJson());
             return jsonObject;

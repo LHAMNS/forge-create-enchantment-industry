@@ -77,7 +77,9 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
             public ItemStack extractItem(int slot, int amount, boolean simulate) {
                 if (slot == 3000) {
                     var result = getStackInSlot(0);
-                    clear();
+                    if (!simulate) {
+                        clear();
+                    }
                     return result;
                 }
                 return ItemStack.EMPTY;
