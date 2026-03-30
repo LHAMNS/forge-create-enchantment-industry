@@ -6,8 +6,10 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.NetworkEvent.Context;
+import plus.dragons.createenchantmentindustry.entry.CeiItems;
 
 public class BlazeEnchanterEditPacket extends SimplePacketBase {
 
@@ -43,19 +45,31 @@ public class BlazeEnchanterEditPacket extends SimplePacketBase {
                         return;
                     if (sender.distanceToSqr(Vec3.atCenterOf(blockPos)) > 64)
                         return;
+                    if (!(sender.containerMenu instanceof EnchantingGuideMenu menu) || menu.directItemStackEdit)
+                        return;
+                    if (!blockPos.equals(menu.blockPos) || !menu.stillValid(sender))
+                        return;
                     if(!(sender.level().getBlockEntity(blockPos) instanceof BlazeEnchanterBlockEntity blazeEnchanter))
                         return;
-                    // Validate index bounds (must be non-negative)
+                    if (!blazeEnchanter.targetItem.is(CeiItems.ENCHANTING_GUIDE.get()))
+                        return;
                     if (index < 0)
                         return;
-                    // Validate the item is an enchanted book (only enchanted books should be set as targets)
-                    if (!itemStack.isEmpty() && !net.minecraft.world.item.Items.ENCHANTED_BOOK.equals(itemStack.getItem()))
-                        return;
+                    if (!itemStack.isEmpty()) {
+                        if (!itemStack.is(Items.ENCHANTED_BOOK))
+                            return;
+                        if (!EnchantingGuideItem.isValidTargetBook(itemStack))
+                            return;
+                        if (index >= EnchantingGuideItem.getSortedEnchantments(itemStack).size())
+                            return;
+                    }
 
-                    CompoundTag tag = blazeEnchanter.targetItem.getOrCreateTag();
+                    ItemStack updatedGuide = blazeEnchanter.targetItem.copy();
+                    CompoundTag tag = updatedGuide.getOrCreateTag();
                     tag.putInt("index", index);
                     tag.put("target", itemStack.serializeNBT());
                     tag.remove("blockPos");
+                    blazeEnchanter.setTargetItem(updatedGuide);
 
                     if(blazeEnchanter.processingTicks>5){
                         blazeEnchanter.processingTicks = BlazeEnchanterBlockEntity.ENCHANTING_TIME;

@@ -90,11 +90,36 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
             @Override
             public ItemStack extractItem(int slot, int amount, boolean simulate) {
                 if (slot == 3000) {
-                    var result = getStackInSlot(0);
-                    if (!simulate) {
-                        clear();
+                    if (amount <= 0)
+                        return ItemStack.EMPTY;
+                    int[] preferredSlots = {1, 2, 3, 0};
+                    for (int actualSlot : preferredSlots) {
+                        ItemStack stack = getStackInSlot(actualSlot);
+                        if (stack.isEmpty())
+                            continue;
+                        ItemStack result = stack.copy();
+                        result.setCount(Math.min(amount, stack.getCount()));
+                        if (!simulate) {
+                            ItemStack remainder = stack.copy();
+                            remainder.shrink(result.getCount());
+                            setStackInSlot(actualSlot, remainder);
+                            boolean anyItemsLeft = false;
+                            for (int i = 0; i < getSlots(); i++) {
+                                if (!getStackInSlot(i).isEmpty()) {
+                                    anyItemsLeft = true;
+                                    break;
+                                }
+                            }
+                            if (!anyItemsLeft) {
+                                remainingTime = -1;
+                                appliedRecipe = false;
+                            }
+                            GrindstoneDrainBlockEntity.this.setChanged();
+                            GrindstoneDrainBlockEntity.this.sendData();
+                        }
+                        return result;
                     }
-                    return result;
+                    return ItemStack.EMPTY;
                 }
                 return ItemStack.EMPTY;
             }
@@ -252,6 +277,9 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
                     inventory.setStackInSlot(i + 1, grinded.get(i));
                 return;
             }
+            // GrindingRecipe matched but fluid check failed — do not fall through
+            // to sandpaper polishing or vanilla grindstone logic
+            return;
         }
         // Sand Paper Polishing
         var polishing = recipeManager.getRecipeFor(AllRecipeTypes.SANDPAPER_POLISHING.getType(), wrapper, level);
@@ -330,7 +358,7 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
 
         Vec3 pos = Vec3.atBottomCenterOf(worldPosition).add(0, 1, 0);
         Direction inputSide = getOutputSide().getOpposite();
-        float offset = inventory.recipeDuration != 0 ? inventory.remainingTime / inventory.recipeDuration : 0;
+        float offset = inventory.recipeDuration != 0 ? (float) inventory.remainingTime / inventory.recipeDuration : 0;
         offset /= 2;
         if (inventory.appliedRecipe)
             offset -= .5f;

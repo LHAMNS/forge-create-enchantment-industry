@@ -25,13 +25,13 @@ import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 @Mod.EventBusSubscriber
 public class DeployerExtension {
 
-    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = false)
+    @SubscribeEvent(priority = EventPriority.HIGHEST, receiveCanceled = false)
     public static void onLivingExperienceDrop(final LivingExperienceDropEvent event) {
         if (event.isCanceled()) return;
         if (!(event.getAttackingPlayer() instanceof DeployerFakePlayer deployer))
             return;
         // Scale the XP by the configured multiplier
-        int experience = Mth.ceil(event.getDroppedExperience() * CeiConfigs.SERVER.deployerXpDropChance.getF());
+        int experience = Mth.ceil(event.getDroppedExperience() * CeiConfigs.SERVER.deployerKillXpScale.getF());
         event.setDroppedExperience(experience);
         if (CeiConfigs.SERVER.deployerCollectXp.get()) {
             deployer.giveExperiencePoints(experience);
@@ -80,8 +80,8 @@ public class DeployerExtension {
         if (CeiConfigs.SERVER.deployerMendItem.get()) {
             ItemStack heldItem = deployer.getMainHandItem();
             if (MendingByDeployer.canItemBeMended(heldItem)) {
-                MendingByDeployer.mendItem(amount, heldItem);
                 consumed = amount - MendingByDeployer.getNewXp(amount, heldItem);
+                MendingByDeployer.mendItem(amount, heldItem);
             }
         }
         int remaining = Math.max(0, amount - consumed);

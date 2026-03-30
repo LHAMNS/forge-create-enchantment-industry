@@ -19,6 +19,7 @@ import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.en
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,37 +27,40 @@ import java.util.Map;
 import static plus.dragons.createenchantmentindustry.EnchantmentIndustry.LANG;
 
 public class PrintEntries {
-    public static Map<ResourceLocation,PrintEntry> ENTRIES = new LinkedHashMap<>();
+    public static final Map<ResourceLocation,PrintEntry> ENTRIES;
 
     static{
+        var mutableEntries = new LinkedHashMap<ResourceLocation,PrintEntry>();
         var e1 = new EnchantedBook();
         var e2 = new WrittenBook();
         var e7 = new CustomNamePrintEntry();
-        var e3 = new NameTag();
         var e4 = new Schedule();
         var e5 = new ClipBoard();
         var e6 = new BannerPatternPrintEntry();
-        ENTRIES.put(e1.id(),e1);
-        ENTRIES.put(e2.id(),e2);
-        ENTRIES.put(e7.id(),e7);
-        ENTRIES.put(e3.id(),e3);
-        ENTRIES.put(e4.id(),e4);
-        ENTRIES.put(e5.id(),e5);
-        ENTRIES.put(e6.id(),e6);
+        mutableEntries.put(e1.id(),e1);
+        mutableEntries.put(e2.id(),e2);
+        mutableEntries.put(e7.id(),e7);
+        mutableEntries.put(e4.id(),e4);
+        mutableEntries.put(e5.id(),e5);
+        mutableEntries.put(e6.id(),e6);
 
         // Register package-related print entries if Create's Package system is available
         try {
             Class.forName("com.simibubi.create.content.logistics.box.PackageItem");
             var e8 = new AddressPrintEntry();
             var e9 = new PackagePatternPrintEntry();
-            ENTRIES.put(e8.id(), e8);
-            ENTRIES.put(e9.id(), e9);
+            mutableEntries.put(e8.id(), e8);
+            mutableEntries.put(e9.id(), e9);
         } catch (ClassNotFoundException | NoClassDefFoundError ignored) {
             // Package system not available in this Create version
         }
 
+        // Allow other mods to register entries via the event (writes to mutableEntries)
+        ENTRIES = mutableEntries;
         var event = new PrintEntryRegisterEvent();
         MinecraftForge.EVENT_BUS.post(event);
+        // Note: ENTRIES remains the same LinkedHashMap instance after event.
+        // It is effectively immutable after static init completes.
     }
 
     static class EnchantedBook implements PrintEntry{
@@ -242,78 +246,6 @@ public class PrintEntries {
                     .add(LANG.number(page)
                             .text(" ")
                             .add(page == 1 ? LANG.translate("generic.unit.page") : LANG.translate("generic.unit.pages"))).component();
-        }
-    }
-
-    static class NameTag implements PrintEntry{
-
-        @Override
-        public ResourceLocation id() {
-            return EnchantmentIndustry.genRL("name_tag");
-        }
-
-        @Override
-        public boolean isEnabled() {
-            return CeiConfigs.SERVER.enableNameTagPrinting.get();
-        }
-
-        @Override
-        public boolean match(ItemStack toPrint) {
-            if (!isEnabled()) return false;
-            if (!toPrint.is(Items.NAME_TAG))
-                return false;
-            // Don't match name tags with custom names - those are handled by CustomNamePrintEntry
-            return !toPrint.hasCustomHoverName();
-        }
-
-        @Override
-        public boolean valid(ItemStack target, ItemStack tested) {
-            return !target.getHoverName().equals(tested.getHoverName());
-        }
-
-        @Override
-        public int requiredInkAmount(ItemStack target) {
-            return CeiConfigs.SERVER.copyNameTagCost.get();
-        }
-
-        @Override
-        public ItemStack print(ItemStack target, ItemStack material) {
-            if(material.is(Items.NAME_TAG)) return target.copy();
-            material.setHoverName(target.getHoverName());
-            return material;
-        }
-
-        @Override
-        public boolean isTooExpensive(ItemStack target, int limit) {
-            return CeiConfigs.SERVER.copyNameTagCost.get() > limit;
-        }
-
-        @Override
-        public void addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking, ItemStack target) {
-            var b = LANG.builder()
-                    .add(Component.translatable(target.getDescriptionId()).withStyle(ChatFormatting.LIGHT_PURPLE))
-                    .text(ChatFormatting.GREEN, " / ")
-                    .add(LANG.itemName(target)
-                            .style(ChatFormatting.GREEN));
-            b.forGoggles(tooltip, 1);
-            boolean tooExpensive = Printing.isTooExpensive(this, target, CeiConfigs.SERVER.copierTankCapacity.get());
-            if (tooExpensive)
-                tooltip.add(Component.literal("     ").append(LANG.translate(
-                        "gui.goggles.too_expensive").component()
-                ).withStyle(ChatFormatting.RED));
-            else
-                tooltip.add(Component.literal("     ").append(LANG.translate(
-                        "gui.goggles.xp_consumption",
-                        String.valueOf(CeiConfigs.SERVER.copyNameTagCost.get())).component()
-                ).withStyle(ChatFormatting.GREEN));
-        }
-
-        @Override
-        public MutableComponent getDisplaySourceContent(ItemStack target) {
-            return LANG.builder()
-                    .add(Component.translatable(target.getDescriptionId()))
-                    .text(" / ")
-                    .add(LANG.itemName(target)).component();
         }
     }
 

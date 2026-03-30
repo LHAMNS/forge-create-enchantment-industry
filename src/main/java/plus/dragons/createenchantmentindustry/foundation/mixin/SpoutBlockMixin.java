@@ -12,8 +12,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
-import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
-import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
+import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceHelper;
 
 import javax.annotation.ParametersAreNonnullByDefault;
 
@@ -36,10 +35,7 @@ public abstract class SpoutBlockMixin extends Block implements IWrenchable, IBE<
         if (level instanceof ServerLevel serverLevel) {
             withBlockEntityDo(level, pos, te -> {
                 var fluidStack = ((SpoutBlockEntityAccessor) te).getTank().getPrimaryHandler().getFluid();
-                ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(fluidStack.getFluid());
-                if(expFluid != null) {
-                    expFluid.drop(serverLevel, VecHelper.getCenterOf(pos), fluidStack.getAmount());
-                }
+                ExperienceHelper.dropExperienceFluid(serverLevel, VecHelper.getCenterOf(pos), fluidStack);
             });
         }
         level.removeBlockEntity(pos);

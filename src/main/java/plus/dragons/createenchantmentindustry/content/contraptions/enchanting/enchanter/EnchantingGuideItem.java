@@ -16,19 +16,23 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraftforge.network.NetworkHooks;
+import net.minecraftforge.registries.ForgeRegistries;
 import plus.dragons.createenchantmentindustry.entry.CeiBlocks;
 import plus.dragons.createenchantmentindustry.entry.CeiContainerTypes;
 import plus.dragons.createenchantmentindustry.entry.CeiItems;
 import plus.dragons.createenchantmentindustry.foundation.advancement.CeiAdvancements;
 
 import javax.annotation.Nullable;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 
 public class EnchantingGuideItem extends Item implements MenuProvider {
     public EnchantingGuideItem(Properties pProperties) {
@@ -129,13 +133,30 @@ public class EnchantingGuideItem extends Item implements MenuProvider {
         if (target == null)
             return null;
         var book = ItemStack.of(target);
-        var enchantments = List.copyOf(EnchantmentHelper.getEnchantments(book).entrySet());
+        var enchantments = getSortedEnchantments(book);
         if (enchantments.isEmpty())
             return null;
-        var index = tag.getInt("index");
+        var index = Math.max(0, tag.getInt("index"));
         if(index>=enchantments.size()) // When certain enchantment of the enchantment book has been removed from the game, this works.
             index=0;
         var result = enchantments.get(index);
         return EnchantmentEntry.of(result.getKey(), result.getValue());
+    }
+
+    public static boolean isValidTargetBook(ItemStack itemStack) {
+        return itemStack.is(Items.ENCHANTED_BOOK) && !getSortedEnchantments(itemStack).isEmpty();
+    }
+
+    public static List<Map.Entry<net.minecraft.world.item.enchantment.Enchantment, Integer>> getSortedEnchantments(ItemStack book) {
+        return EnchantmentHelper.getEnchantments(book)
+                .entrySet()
+                .stream()
+                .sorted(Comparator
+                        .comparing((Map.Entry<net.minecraft.world.item.enchantment.Enchantment, Integer> entry) -> {
+                            var id = ForgeRegistries.ENCHANTMENTS.getKey(entry.getKey());
+                            return id == null ? "" : id.toString();
+                        })
+                        .thenComparingInt(Map.Entry::getValue))
+                .toList();
     }
 }

@@ -36,6 +36,10 @@ public class TemplateEnchantingBehaviour extends EnchantingBehaviour {
         return templateTarget;
     }
 
+    public int getAvailableEnchantmentCount(boolean hyper) {
+        return getAvailableEnchantments(hyper).size();
+    }
+
     @Override
     public boolean canProcess(ItemStack stack, ItemStack targetItem, boolean hyper) {
         if (!(stack.getItem() instanceof EnchantingTemplateItem template))
@@ -61,10 +65,13 @@ public class TemplateEnchantingBehaviour extends EnchantingBehaviour {
 
     @Override
     public void applyEnchantment(ItemStack stack, ItemStack targetItem, boolean hyper) {
+        applyEnchantment(stack, targetItem, hyper, new Random());
+    }
+
+    public void applyEnchantment(ItemStack stack, ItemStack targetItem, boolean hyper, Random random) {
         List<EnchantmentInstance> available = getAvailableEnchantments(hyper);
         if (available.isEmpty()) return;
 
-        Random random = new Random();
         // Select a random enchantment from available ones
         EnchantmentInstance selected = available.get(random.nextInt(available.size()));
 

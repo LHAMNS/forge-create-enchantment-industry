@@ -104,6 +104,7 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
                         updateHeatLevel(BlazeEnchanterBlock.HeatLevel.SEETHING);
                     else
                         updateHeatLevel(BlazeEnchanterBlock.HeatLevel.SMOULDERING);
+                    inventory.updateResult();
                 }));
         registerAwardables(behaviours,
                 CeiAdvancements.BLAZING_FUSION.asCreateAdvancement(),
@@ -401,7 +402,7 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
     @Override
     public void destroy() {
         super.destroy();
-        if (level instanceof ServerLevel serverLevel) {
+        if (level instanceof ServerLevel) {
             var pos = getBlockPos();
             // Drop inventory contents
             for (int i = 0; i < inventory.getSlots(); i++) {
@@ -410,24 +411,7 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
                     net.minecraft.world.Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack);
                 }
             }
-            // Drop experience fluid as orbs
-            var tank = internalTank.getPrimaryHandler();
-            var fluidStack = tank.getFluid();
-            ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(fluidStack.getFluid());
-            if (expFluid != null) {
-                expFluid.drop(serverLevel, VecHelper.getCenterOf(pos), fluidStack.getAmount());
-            }
         }
-    }
-
-    @Override
-    public void invalidate() {
-        super.invalidate();
-    }
-
-    @Override
-    public void reviveCaps() {
-        super.reviveCaps();
     }
 
     @Override

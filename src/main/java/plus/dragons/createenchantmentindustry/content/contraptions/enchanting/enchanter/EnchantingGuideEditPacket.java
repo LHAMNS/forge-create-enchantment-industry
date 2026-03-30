@@ -5,6 +5,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraftforge.network.NetworkEvent.Context;
 import plus.dragons.createenchantmentindustry.entry.CeiItems;
 
@@ -35,13 +36,24 @@ public class EnchantingGuideEditPacket extends SimplePacketBase {
         context.enqueueWork(() -> {
                     ServerPlayer sender = context.getSender();
                     if (sender == null) return;
+                    if (!(sender.containerMenu instanceof EnchantingGuideMenu menu) || !menu.directItemStackEdit)
+                        return;
+                    if (!menu.stillValid(sender))
+                        return;
                     ItemStack mainHandItem = sender.getMainHandItem();
                     if (!CeiItems.ENCHANTING_GUIDE.isIn(mainHandItem))
                         return;
-                    // Validate index is non-negative
-                    if (index < 0) return;
-                    // Validate target item is an enchanted book or empty
-                    if (!itemStack.isEmpty() && !itemStack.is(net.minecraft.world.item.Items.ENCHANTED_BOOK))
+                    if (index < 0)
+                        return;
+                    if (!itemStack.isEmpty()) {
+                        if (!itemStack.is(Items.ENCHANTED_BOOK))
+                            return;
+                        if (!EnchantingGuideItem.isValidTargetBook(itemStack))
+                            return;
+                        if (index >= EnchantingGuideItem.getSortedEnchantments(itemStack).size())
+                            return;
+                    }
+                    if (!mainHandItem.is(CeiItems.ENCHANTING_GUIDE.get()))
                         return;
 
                     CompoundTag tag = mainHandItem.getOrCreateTag();

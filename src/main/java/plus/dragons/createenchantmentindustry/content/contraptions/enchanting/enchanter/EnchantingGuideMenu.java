@@ -50,12 +50,11 @@ public class EnchantingGuideMenu extends GhostItemMenu<ItemStack> {
     }
 
     private void updateEnchantments(ItemStack stack) {
-        var map = EnchantmentHelper.getEnchantments(stack);
-        if (map.isEmpty())
+        var enchantmentsInOrder = EnchantingGuideItem.getSortedEnchantments(stack);
+        if (enchantmentsInOrder.isEmpty())
             enchantments = ImmutableList.of(NO_ENCHANTMENT);
         else
-            enchantments = ImmutableList.copyOf(map
-                    .entrySet()
+            enchantments = ImmutableList.copyOf(enchantmentsInOrder
                     .stream()
                     .map(entry -> entry.getKey().getFullname(entry.getValue()))
                     .toArray(Component[]::new)

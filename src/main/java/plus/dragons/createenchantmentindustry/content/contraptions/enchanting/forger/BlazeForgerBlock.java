@@ -18,6 +18,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.context.UseOnContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
@@ -196,10 +197,12 @@ public class BlazeForgerBlock extends HorizontalDirectionalBlock implements IWre
             if (world.getBlockEntity(pos) instanceof BlazeForgerBlockEntity be) {
                 be.destroy();
             }
-            if (player != null)
+            if (player != null) {
                 player.level().setBlockAndUpdate(pos, AllBlocks.BLAZE_BURNER.getDefaultState()
                         .setValue(BlazeBurnerBlock.FACING, state.getValue(FACING))
                         .setValue(BlazeBurnerBlock.HEAT_LEVEL, BlazeBurnerBlock.HeatLevel.SMOULDERING));
+                player.getInventory().placeItemBackInInventory(new ItemStack(Items.ANVIL));
+            }
         }
         return InteractionResult.SUCCESS;
     }
@@ -224,6 +227,7 @@ public class BlazeForgerBlock extends HorizontalDirectionalBlock implements IWre
     public List<ItemStack> getDrops(BlockState pState, LootParams.Builder pParams) {
         var ret = new ArrayList<ItemStack>();
         ret.add(new ItemStack(AllBlocks.BLAZE_BURNER.get()));
+        ret.add(new ItemStack(Items.ANVIL));
         return ret;
     }
 

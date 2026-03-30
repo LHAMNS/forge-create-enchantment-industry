@@ -25,12 +25,13 @@ public class PrinterTargetItemHandler implements IItemHandler {
     public @Nonnull ItemStack insertItem(int slot, @Nonnull ItemStack stack, boolean simulate) {
         if(!be.getCopyTarget().isEmpty()) return stack;
         if(!isItemValid(slot,stack)) return stack; // Prevent strange crash problem from happening. See #170 log. Chute does not check item validity before insertion.
-        else{
-            if(!simulate){
-                be.setCopyTarget(stack);
-            }
+        ItemStack inserted = stack.copyWithCount(1);
+        if(!simulate){
+            be.setCopyTarget(inserted);
         }
-        return ItemStack.EMPTY;
+        if (stack.getCount() <= 1)
+            return ItemStack.EMPTY;
+        return stack.copyWithCount(stack.getCount() - 1);
     }
 
     @Override

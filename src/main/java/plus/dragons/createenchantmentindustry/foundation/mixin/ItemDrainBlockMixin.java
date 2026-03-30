@@ -14,8 +14,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
-import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
+import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceHelper;
 
 @Mixin(ItemDrainBlock.class)
 public abstract class ItemDrainBlockMixin extends Block implements IBE<ItemDrainBlockEntity>, IWrenchable {
@@ -30,10 +29,7 @@ public abstract class ItemDrainBlockMixin extends Block implements IBE<ItemDrain
             return;
         withBlockEntityDo(level, pos, te -> {
             var fluidStack = ((ItemDrainBlockEntityAccessor) te).getInternalTank().getPrimaryHandler().getFluid();
-            ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(fluidStack.getFluid());
-            if(expFluid != null) {
-                expFluid.drop(serverLevel, VecHelper.getCenterOf(pos), fluidStack.getAmount());
-            }
+            ExperienceHelper.dropExperienceFluid(serverLevel, VecHelper.getCenterOf(pos), fluidStack);
         });
     }
 }

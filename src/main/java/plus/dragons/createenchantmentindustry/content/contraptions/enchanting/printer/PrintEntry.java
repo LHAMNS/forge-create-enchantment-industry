@@ -6,6 +6,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraftforge.fluids.FluidStack;
+import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 
 import java.util.List;
@@ -27,6 +28,11 @@ public interface PrintEntry {
     boolean valid(ItemStack target, ItemStack tested);
 
     int requiredInkAmount(ItemStack target);
+
+    default int requiredInkAmount(ItemStack target, FluidStack fluid) {
+        int configuredCost = CeiDataMaps.getPrintTypeCost(id().toString(), fluid.getFluid());
+        return configuredCost >= 0 ? configuredCost : requiredInkAmount(target);
+    }
 
     default Fluid requiredInkType(ItemStack target) {
         return CeiFluids.EXPERIENCE.get();

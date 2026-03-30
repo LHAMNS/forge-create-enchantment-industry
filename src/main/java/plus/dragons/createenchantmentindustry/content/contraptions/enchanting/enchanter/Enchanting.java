@@ -16,13 +16,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Predicate;
 
 public class Enchanting {
 
     public static final TagKey<Item> UNENCHANTABLE =
             TagKey.create(Registries.ITEM, EnchantmentIndustry.genRL("unenchantable"));
-    public static final List<Predicate<ItemStack>> UNENCHANTABLE_CONDITIONS = new ArrayList<>();
+    /** Thread-safe list of conditions. Mods may add to this during initialization. */
+    public static final List<Predicate<ItemStack>> UNENCHANTABLE_CONDITIONS = new CopyOnWriteArrayList<>();
 
     @Nullable
     public static EnchantmentEntry getTargetEnchantment(ItemStack itemStack, boolean hyper) {

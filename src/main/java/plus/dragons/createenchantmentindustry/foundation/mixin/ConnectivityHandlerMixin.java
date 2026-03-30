@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.sugar.Local;
 import com.simibubi.create.api.connectivity.ConnectivityHandler;
 import com.simibubi.create.content.fluids.tank.CreativeFluidTankBlockEntity;
 import com.simibubi.create.foundation.blockEntity.IMultiBlockEntityContainer;
+import net.createmod.catnip.math.VecHelper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.fluids.FluidStack;
@@ -11,8 +12,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
-import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
+import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceHelper;
 
 /**
  * Equivalent to upstream's ConnectivityHandlerMixin.
@@ -36,10 +36,7 @@ public class ConnectivityHandlerMixin {
         if (!fluidContainer.hasTank() || fluidContainer.getTank(0) instanceof CreativeFluidTankBlockEntity.CreativeSmartFluidTank)
             return;
         var dropped = fluidContainer.getFluid(0);
-        ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(dropped.getFluid());
-        if (expFluid != null) {
-            expFluid.drop(level, net.createmod.catnip.math.VecHelper.getCenterOf(be.getBlockPos()), dropped.getAmount());
-        }
+        ExperienceHelper.dropExperienceFluid(level, VecHelper.getCenterOf(be.getBlockPos()), dropped);
     }
 
     /**
@@ -57,9 +54,6 @@ public class ConnectivityHandlerMixin {
             return;
         if (toDistribute.isEmpty())
             return;
-        ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(toDistribute.getFluid());
-        if (expFluid != null) {
-            expFluid.drop(level, net.createmod.catnip.math.VecHelper.getCenterOf(be.getBlockPos()), toDistribute.getAmount());
-        }
+        ExperienceHelper.dropExperienceFluid(level, VecHelper.getCenterOf(be.getBlockPos()), toDistribute);
     }
 }

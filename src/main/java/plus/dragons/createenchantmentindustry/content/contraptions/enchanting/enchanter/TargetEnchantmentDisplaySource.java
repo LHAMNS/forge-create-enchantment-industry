@@ -3,6 +3,7 @@ package plus.dragons.createenchantmentindustry.content.contraptions.enchanting.e
 import com.simibubi.create.content.redstone.displayLink.DisplayLinkContext;
 import com.simibubi.create.content.redstone.displayLink.source.SingleLineDisplaySource;
 import com.simibubi.create.content.redstone.displayLink.target.DisplayTargetStats;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import plus.dragons.createenchantmentindustry.EnchantmentIndustry;
 
@@ -11,6 +12,14 @@ public class TargetEnchantmentDisplaySource extends SingleLineDisplaySource {
     protected MutableComponent provideLine(DisplayLinkContext context, DisplayTargetStats stats) {
         if (!(context.getSourceBlockEntity() instanceof BlazeEnchanterBlockEntity blazeEnchanter))
             return EMPTY_LINE;
+        if (blazeEnchanter.isUsingTemplateMode()) {
+            MutableComponent line = blazeEnchanter.getTemplateItem().getHoverName().copy();
+            int availableCount = blazeEnchanter.getTemplateEnchantmentCount();
+            if (availableCount > 0)
+                line.append(Component.literal(" / " + availableCount + " enchantment"
+                        + (availableCount == 1 ? "" : "s")));
+            return line;
+        }
         EnchantmentEntry entry = Enchanting.getTargetEnchantment(blazeEnchanter.targetItem, blazeEnchanter.hyper());
         if(entry == null || !entry.valid()){
             return EnchantmentIndustry.LANG.translate("gui.goggles.blaze_enchanter.invalid_target").component();

@@ -15,7 +15,9 @@ import javax.annotation.Nullable;
 import java.util.Optional;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Forge 1.20.1 equivalent of NeoForge DataMaps for CEI.
@@ -59,6 +61,9 @@ public class CeiDataMaps {
 
     // ── XP Fluid Units ──────────────────────────────────────────────────
     // Maps a Fluid -> XP per mB. For example, EXPERIENCE=1, HYPER_EXPERIENCE=10.
+    private static final Map<Fluid, Integer> REGISTERED_XP_FLUID_UNITS = new LinkedHashMap<>();
+    private static final Map<Fluid, Integer> DATAPACK_XP_FLUID_UNITS = new LinkedHashMap<>();
+    private static final Set<Fluid> DATAPACK_REMOVED_XP_FLUIDS = new LinkedHashSet<>();
     private static final Map<Fluid, Integer> XP_FLUID_UNITS = new LinkedHashMap<>();
 
     // ── Printer Fluid Cost Multipliers ──────────────────────────────────
@@ -140,7 +145,8 @@ public class CeiDataMaps {
             EnchantmentIndustry.LOGGER.warn("CeiDataMaps: Ignoring XP fluid registration with non-positive ratio: {}", fluid);
             return;
         }
-        XP_FLUID_UNITS.put(fluid, xpPerMb);
+        REGISTERED_XP_FLUID_UNITS.put(fluid, xpPerMb);
+        rebuildXpFluidRegistry();
     }
 
     /**
@@ -148,7 +154,39 @@ public class CeiDataMaps {
      * Useful for mods that want to override default behavior.
      */
     public static void unregisterXpFluid(Fluid fluid) {
-        XP_FLUID_UNITS.remove(fluid);
+        REGISTERED_XP_FLUID_UNITS.remove(fluid);
+        DATAPACK_XP_FLUID_UNITS.remove(fluid);
+        DATAPACK_REMOVED_XP_FLUIDS.remove(fluid);
+        rebuildXpFluidRegistry();
+    }
+
+    public static void registerXpFluidFromDatapack(Fluid fluid, int xpPerMb) {
+        if (xpPerMb <= 0) {
+            EnchantmentIndustry.LOGGER.warn("CeiDataMaps: Ignoring datapack XP fluid registration with non-positive ratio: {}", fluid);
+            return;
+        }
+        DATAPACK_REMOVED_XP_FLUIDS.remove(fluid);
+        DATAPACK_XP_FLUID_UNITS.put(fluid, xpPerMb);
+        rebuildXpFluidRegistry();
+    }
+
+    public static void unregisterXpFluidFromDatapack(Fluid fluid) {
+        DATAPACK_XP_FLUID_UNITS.remove(fluid);
+        DATAPACK_REMOVED_XP_FLUIDS.add(fluid);
+        rebuildXpFluidRegistry();
+    }
+
+    public static void resetXpFluidsFromDatapacks() {
+        DATAPACK_XP_FLUID_UNITS.clear();
+        DATAPACK_REMOVED_XP_FLUIDS.clear();
+        rebuildXpFluidRegistry();
+    }
+
+    private static void rebuildXpFluidRegistry() {
+        XP_FLUID_UNITS.clear();
+        XP_FLUID_UNITS.putAll(REGISTERED_XP_FLUID_UNITS);
+        DATAPACK_REMOVED_XP_FLUIDS.forEach(XP_FLUID_UNITS::remove);
+        XP_FLUID_UNITS.putAll(DATAPACK_XP_FLUID_UNITS);
     }
 
     /**

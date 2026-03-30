@@ -52,6 +52,7 @@ public class CeiExperienceFluidReloadListener extends SimpleJsonResourceReloadLi
     protected void apply(Map<ResourceLocation, JsonElement> entries, ResourceManager resourceManager, ProfilerFiller profiler) {
         int loaded = 0;
         int removed = 0;
+        CeiDataMaps.resetXpFluidsFromDatapacks();
 
         for (Map.Entry<ResourceLocation, JsonElement> entry : entries.entrySet()) {
             ResourceLocation id = entry.getKey();
@@ -73,7 +74,7 @@ public class CeiExperienceFluidReloadListener extends SimpleJsonResourceReloadLi
                 }
 
                 if (json.has("remove") && json.get("remove").getAsBoolean()) {
-                    CeiDataMaps.unregisterXpFluid(fluid);
+                    CeiDataMaps.unregisterXpFluidFromDatapack(fluid);
                     removed++;
                     continue;
                 }
@@ -89,7 +90,7 @@ public class CeiExperienceFluidReloadListener extends SimpleJsonResourceReloadLi
                     continue;
                 }
 
-                CeiDataMaps.registerXpFluid(fluid, xpPerMb);
+                CeiDataMaps.registerXpFluidFromDatapack(fluid, xpPerMb);
                 loaded++;
             } catch (Exception e) {
                 EnchantmentIndustry.LOGGER.error("Failed to parse experience fluid entry {}: {}", id, e.getMessage());

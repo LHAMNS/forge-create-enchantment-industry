@@ -212,66 +212,74 @@ public class DisenchanterBlockEntity extends SmartBlockEntity implements IHaveGo
         if (!players.isEmpty()) {
             AtomicInteger sum = new AtomicInteger();
             internalTank.allowInsertion();
-            players.forEach(player -> {
-                if (getPlayerExperience(player) >= ABSORB_AMOUNT) {
-                    sum.addAndGet(ABSORB_AMOUNT);
-                } else if (getPlayerExperience(player) != 0) {
-                    sum.addAndGet(getPlayerExperience(player));
-                }
-            });
-            if (sum.get() != 0) {
-                var fluidStack = new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), sum.get());
-                var inserted = internalTank.getPrimaryHandler().fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
-                if (inserted != 0) {
-                    for (var player : players) {
-                        var total = getPlayerExperience(player);
-                        if (inserted >= ABSORB_AMOUNT) {
-                            if (total >= ABSORB_AMOUNT) {
-                                player.giveExperiencePoints(-ABSORB_AMOUNT);
-                                inserted -= ABSORB_AMOUNT;
-                            } else if (total != 0) {
-                                inserted -= total;
-                                player.giveExperiencePoints(-total);
-                            }
-                            absorbedXp = true;
-                            CeiAdvancements.SPIRIT_TAKING.getTrigger().trigger((ServerPlayer) player);
-                        } else if (inserted > 0) {
-                            if (total >= inserted) {
-                                player.giveExperiencePoints(-inserted);
-                                inserted = 0;
+            try {
+                players.forEach(player -> {
+                    if (getPlayerExperience(player) >= ABSORB_AMOUNT) {
+                        sum.addAndGet(ABSORB_AMOUNT);
+                    } else if (getPlayerExperience(player) != 0) {
+                        sum.addAndGet(getPlayerExperience(player));
+                    }
+                });
+                if (sum.get() != 0) {
+                    var fluidStack = new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), sum.get());
+                    var inserted = internalTank.getPrimaryHandler().fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
+                    if (inserted != 0) {
+                        for (var player : players) {
+                            var total = getPlayerExperience(player);
+                            if (inserted >= ABSORB_AMOUNT) {
+                                if (total >= ABSORB_AMOUNT) {
+                                    player.giveExperiencePoints(-ABSORB_AMOUNT);
+                                    inserted -= ABSORB_AMOUNT;
+                                } else if (total != 0) {
+                                    inserted -= total;
+                                    player.giveExperiencePoints(-total);
+                                }
+                                absorbedXp = true;
+                                if (player instanceof ServerPlayer serverPlayer)
+                                    CeiAdvancements.SPIRIT_TAKING.getTrigger().trigger(serverPlayer);
+                            } else if (inserted > 0) {
+                                if (total >= inserted) {
+                                    player.giveExperiencePoints(-inserted);
+                                    inserted = 0;
+                                } else {
+                                    inserted -= total;
+                                    player.giveExperiencePoints(-total);
+                                }
+                                absorbedXp = true;
+                                if (player instanceof ServerPlayer serverPlayer)
+                                    CeiAdvancements.SPIRIT_TAKING.getTrigger().trigger(serverPlayer);
                             } else {
-                                inserted -= total;
-                                player.giveExperiencePoints(-total);
+                                break;
                             }
-                            absorbedXp = true;
-                            CeiAdvancements.SPIRIT_TAKING.getTrigger().trigger((ServerPlayer) player);
-                        } else {
-                            break;
                         }
                     }
                 }
+            } finally {
+                internalTank.forbidInsertion();
             }
-            internalTank.forbidInsertion();
         }
         List<ExperienceOrb> experienceOrbs = level.getEntitiesOfClass(ExperienceOrb.class, absorbArea);
         if (!experienceOrbs.isEmpty()) {
             internalTank.allowInsertion();
-            for (var orb : experienceOrbs) {
-                var amount = orb.value;
-                var fluidStack = new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), amount);
-                var inserted = internalTank.getPrimaryHandler().fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
-                if (inserted == amount) {
-                    absorbedXp = true;
-                    orb.remove(Entity.RemovalReason.DISCARDED);
-                } else {
-                    if (inserted != 0) {
+            try {
+                for (var orb : experienceOrbs) {
+                    var amount = orb.value;
+                    var fluidStack = new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), amount);
+                    var inserted = internalTank.getPrimaryHandler().fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
+                    if (inserted == amount) {
                         absorbedXp = true;
-                        orb.value -= inserted;
+                        orb.remove(Entity.RemovalReason.DISCARDED);
+                    } else {
+                        if (inserted != 0) {
+                            absorbedXp = true;
+                            orb.value -= inserted;
+                        }
+                        break;
                     }
-                    break;
                 }
+            } finally {
+                internalTank.forbidInsertion();
             }
-            internalTank.forbidInsertion();
         }
         if (absorbedXp)
             award(CeiAdvancements.EXPERIMENTAL.asCreateAdvancement());
@@ -301,14 +309,16 @@ public class DisenchanterBlockEntity extends SmartBlockEntity implements IHaveGo
 
         if (processingTicks > 5) {
             internalTank.allowInsertion();
-            if (internalTank.getPrimaryHandler()
-                    .fill(xp, IFluidHandler.FluidAction.SIMULATE) != xp.getAmount()) {
-                internalTank.forbidInsertion();
-                processingTicks = DISENCHANTER_TIME;
+            try {
+                if (internalTank.getPrimaryHandler()
+                        .fill(xp, IFluidHandler.FluidAction.SIMULATE) != xp.getAmount()) {
+                    processingTicks = DISENCHANTER_TIME;
+                    return true;
+                }
                 return true;
+            } finally {
+                internalTank.forbidInsertion();
             }
-            internalTank.forbidInsertion();
-            return true;
         }
 
         // Advancement
@@ -327,8 +337,11 @@ public class DisenchanterBlockEntity extends SmartBlockEntity implements IHaveGo
         resultItem.setCount(heldItem.stack.getCount());
         heldItem.stack = resultItem;
         internalTank.allowInsertion();
-        internalTank.getPrimaryHandler().fill(xp, IFluidHandler.FluidAction.EXECUTE);
-        internalTank.forbidInsertion();
+        try {
+            internalTank.getPrimaryHandler().fill(xp, IFluidHandler.FluidAction.EXECUTE);
+        } finally {
+            internalTank.forbidInsertion();
+        }
         level.levelEvent(1042, worldPosition, 0);
         notifyUpdate();
         return true;
@@ -404,16 +417,10 @@ public class DisenchanterBlockEntity extends SmartBlockEntity implements IHaveGo
     @Override
     public void destroy() {
         super.destroy();
-        if (level instanceof ServerLevel serverLevel) {
+        if (level instanceof ServerLevel) {
             ItemStack heldItemStack = getHeldItemStack();
             if(!heldItemStack.isEmpty())
                 Containers.dropItemStack(level, getBlockPos().getX(), getBlockPos().getY(), getBlockPos().getZ(), heldItemStack);
-            var tank = getInternalTank().getPrimaryHandler();
-            var fluidStack = tank.getFluid();
-            ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(fluidStack.getFluid());
-            if(expFluid != null) {
-                expFluid.drop(serverLevel, VecHelper.getCenterOf(getBlockPos()), fluidStack.getAmount());
-            }
         }
     }
 

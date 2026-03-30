@@ -7,6 +7,7 @@ import net.minecraftforge.common.util.FakePlayer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 
 @Mixin(Player.class)
 public class PlayerMixin {
@@ -15,6 +16,9 @@ public class PlayerMixin {
     private boolean enableSweepingEdgeForDeployer(boolean value){
         var self = (Player)(Object) this;
         if(self instanceof FakePlayer fakePlayer){
+            if (!CeiConfigs.SERVER.deployerSweepAttack.get()) {
+                return false;
+            }
             ItemStack itemstack = fakePlayer.getItemInHand(InteractionHand.MAIN_HAND);
             return itemstack.canPerformAction(net.minecraftforge.common.ToolActions.SWORD_SWEEP);
         }

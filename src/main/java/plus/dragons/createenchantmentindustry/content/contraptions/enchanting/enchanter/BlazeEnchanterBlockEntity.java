@@ -143,13 +143,6 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         return superMode ? Math.max(max, maxSuper) : Math.min(max, maxSuper);
     }
 
-    /**
-     * Get the current scroll-value enchant level.
-     */
-    public int getEnchantLevel() {
-        return enchanterBehaviour != null ? enchanterBehaviour.getValue() : enchantLevel;
-    }
-
     @Override
     @SuppressWarnings("deprecation") //Fluid Tags are still useful for mod interaction
     public void addBehaviours(List<BlockEntityBehaviour> behaviours) {
@@ -456,13 +449,20 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
             if (processingTicks > 5) {
                 if (!isCreative) {
                     boolean hasSuperExp = hyper && superExperience >= cost;
-                    var tankFluid = internalTank.getPrimaryHandler().getFluid().getFluid();
-                    if (!hasSuperExp && (!CeiFluids.EXPERIENCE.is(tankFluid) && !CeiFluids.HYPER_EXPERIENCE.is(tankFluid) ||
-                            internalTank.getPrimaryHandler().getFluidAmount() < exp.getAmount())) {
+                    if (!hasSuperExp && !hasRequiredTankFluid(exp.getAmount(), hyper)) {
                         processingTicks = ENCHANTING_TIME;
                     }
                 }
                 return true;
+            }
+
+            // Re-check fluid availability before applying enchantment
+            if (!isCreative) {
+                boolean hasSuperExp = hyper && superExperience >= cost;
+                if (!hasSuperExp && !hasRequiredTankFluid(exp.getAmount(), hyper)) {
+                    processingTicks = ENCHANTING_TIME;
+                    return true;
+                }
             }
 
             // Lightning strike check in hyper mode
@@ -476,7 +476,10 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
                 }
             }
             // Process finished - apply template enchanting
-            enchantingBehaviour.applyEnchantment(heldItem.stack, targetItem, hyper);
+            if (enchantingBehaviour instanceof TemplateEnchantingBehaviour templateBehaviour)
+                templateBehaviour.applyEnchantment(heldItem.stack, targetItem, hyper, new Random(enchantmentSeed));
+            else
+                enchantingBehaviour.applyEnchantment(heldItem.stack, targetItem, hyper);
             // In cursed mode, also apply a random curse enchantment
             if (cursed) {
                 Enchanting.applyCurseEnchantment(heldItem.stack, random);
@@ -503,8 +506,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
                 ? CeiFluids.HYPER_EXPERIENCE.get().getSource()
                 : CeiFluids.EXPERIENCE.get().getSource(),
                 (int) (Enchanting.getExperienceConsumption(entry.getFirst(), entry.getSecond()) *
-                        (hyper? CeiConfigs.SERVER.hyperEnchantByBlazeEnchanterCostCoefficient.get():
-                                CeiConfigs.SERVER.enchantByBlazeEnchanterCostCoefficient.get()))
+                        snapshotCostCoefficient)
         );
 
         if (processingTicks > 5) {
@@ -517,6 +519,15 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
                 }
             }
             return true;
+        }
+
+        // Re-check fluid availability before applying enchantment
+        if (!isCreative) {
+            boolean hasSuperExp = hyper && superExperience >= exp.getAmount();
+            if (!hasSuperExp && !hasRequiredTankFluid(exp.getAmount(), hyper)) {
+                processingTicks = ENCHANTING_TIME;
+                return true;
+            }
         }
 
         // Lightning strike check in hyper mode
@@ -591,6 +602,25 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
      */
     public boolean canProcessWithBehaviour(ItemStack stack) {
         return enchantingBehaviour.canProcess(stack, targetItem, hyper());
+    }
+
+    public boolean isUsingTemplateMode() {
+        return !templateItem.isEmpty() && enchantingBehaviour instanceof TemplateEnchantingBehaviour;
+    }
+
+    public int getTemplateEnchantmentCount() {
+        if (enchantingBehaviour instanceof TemplateEnchantingBehaviour templateBehaviour)
+            return templateBehaviour.getAvailableEnchantmentCount(hyper());
+        return 0;
+    }
+
+    private boolean hasRequiredTankFluid(int amount, boolean hyper) {
+        FluidStack tankFluid = internalTank.getPrimaryHandler().getFluid();
+        if (tankFluid.getAmount() < amount)
+            return false;
+        return hyper
+                ? CeiFluids.HYPER_EXPERIENCE.is(tankFluid.getFluid())
+                : CeiFluids.EXPERIENCE.is(tankFluid.getFluid());
     }
 
     /**
@@ -677,7 +707,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     @Override
     public void destroy() {
         super.destroy();
-        if (level instanceof ServerLevel serverLevel) {
+        if (level instanceof ServerLevel) {
             ItemStack heldItemStack = getHeldItemStack();
             var pos = getBlockPos();
             if (!heldItemStack.isEmpty())
@@ -685,12 +715,6 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
             Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), targetItem);
             if (!templateItem.isEmpty())
                 Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), templateItem);
-            var tank = internalTank.getPrimaryHandler();
-            var fluidStack = tank.getFluid();
-            ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(fluidStack.getFluid());
-            if(expFluid != null) {
-                expFluid.drop(serverLevel, VecHelper.getCenterOf(pos), fluidStack.getAmount());
-            }
         }
     }
 
@@ -745,11 +769,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         FluidStack exp = new FluidStack(hyper
                 ? CeiFluids.HYPER_EXPERIENCE.get().getSource()
                 : CeiFluids.EXPERIENCE.get().getSource(), amount);
-        if (internalTank.getPrimaryHandler().getFluidAmount() >= amount) {
-            internalTank.getPrimaryHandler().drain(exp, IFluidHandler.FluidAction.EXECUTE);
-            return true;
-        }
-        return false;
+        return internalTank.getPrimaryHandler().drain(exp, IFluidHandler.FluidAction.EXECUTE).getAmount() == amount;
     }
 
     @Override
@@ -776,8 +796,18 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     @Override
     public void writeSafe(CompoundTag tag) {
         super.writeSafe(tag);
-        tag.put("TargetItem", new ItemStack(CeiItems.ENCHANTING_GUIDE.get()).serializeNBT());
+        tag.put("TargetItem", targetItem.serializeNBT());
         tag.putBoolean("Goggles", goggles);
+        tag.putInt("ProcessingTicks", processingTicks);
+        tag.putInt("SuperExperience", superExperience);
+        tag.putBoolean("IsCreative", isCreative);
+        tag.putLong("EnchantmentSeed", enchantmentSeed);
+        tag.putInt("EnchantLevel", enchantLevel);
+        tag.putFloat("SnapshotCostCoeff", snapshotCostCoefficient);
+        if (!templateItem.isEmpty())
+            tag.put("TemplateItem", templateItem.serializeNBT());
+        if (heldItem != null)
+            tag.put("HeldItem", heldItem.serializeNBT());
     }
 
     @Override
@@ -829,13 +859,34 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         LANG.translate("gui.goggles.blaze_enchanter").forGoggles(tooltip);
-        if (!templateItem.isEmpty()) {
-            LANG.translate("gui.goggles.blaze_enchanter.template").forGoggles(tooltip);
+        if (isUsingTemplateMode()) {
+            LANG.translate("gui.goggles.enchanting.template").forGoggles(tooltip);
             tooltip.add(Component.literal("     ")
                     .append(templateItem.getHoverName())
                     .withStyle(ChatFormatting.GRAY));
-        }
-        if (targetItem != null && targetItem.is(CeiItems.ENCHANTING_GUIDE.get())) {
+            int availableCount = getTemplateEnchantmentCount();
+            if (availableCount > 0) {
+                tooltip.add(Component.literal("     " + availableCount + " enchantment"
+                                + (availableCount == 1 ? "" : "s") + " available")
+                        .withStyle(ChatFormatting.GRAY));
+            }
+            int consumption = (int) (getExperienceCostFromBehaviour() *
+                    (hyper() ? CeiConfigs.SERVER.hyperEnchantByBlazeEnchanterCostCoefficient.get()
+                            : CeiConfigs.SERVER.enchantByBlazeEnchanterCostCoefficient.get()));
+            if (consumption > 0) {
+                if (consumption > CeiConfigs.SERVER.blazeEnchanterTankCapacity.get())
+                    tooltip.add(Component.literal("     ").append(LANG.translate("gui.goggles.too_expensive")
+                                    .component())
+                            .withStyle(ChatFormatting.RED));
+                else
+                    tooltip.add(Component.literal("     ")
+                            .append(LANG.translate(hyper()
+                                            ? "gui.goggles.hyper_xp_consumption"
+                                            : "gui.goggles.xp_consumption",
+                                    consumption).component())
+                            .withStyle(hyper() ? ChatFormatting.AQUA : ChatFormatting.GREEN));
+            }
+        } else if (targetItem != null && targetItem.is(CeiItems.ENCHANTING_GUIDE.get())) {
             EnchantmentEntry entry = Enchanting.getTargetEnchantment(targetItem, hyper());
             if (entry != null) {
                 tooltip.add(Component.literal("     ")

@@ -22,16 +22,17 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ExperienceLanternMovementBehaviour implements MovementBehaviour {
     @Override
     public void tick(MovementContext context) {
-        if (!context.world.isClientSide && context.world.getGameTime() % 10 == 0) {
-            var effectiveAABB = new AABB(
-                    context.position.subtract(0.5d, 0.5d, 0.5d),
-                    context.position.add(0.5d, 0.5d, 0.5d)).inflate(0.5);
+        if (context.world.isClientSide) return;
+        boolean shouldDrain = context.world.getGameTime() % 10 == 0;
+        boolean shouldPull = CeiConfigs.SERVER.experienceLanternPullToggle.get();
+        if (!shouldDrain && !shouldPull) return;
+        var effectiveAABB = new AABB(
+                context.position.subtract(0.5d, 0.5d, 0.5d),
+                context.position.add(0.5d, 0.5d, 0.5d)).inflate(0.5);
+        if (shouldDrain) {
             drainExp(context.world, effectiveAABB, context.contraption.getStorage().getFluids());
         }
-        if (!context.world.isClientSide && CeiConfigs.SERVER.experienceLanternPullToggle.get()) {
-            var effectiveAABB = new AABB(
-                    context.position.subtract(0.5d, 0.5d, 0.5d),
-                    context.position.add(0.5d, 0.5d, 0.5d)).inflate(0.5);
+        if (shouldPull) {
             pullExp(context.world, effectiveAABB, context.position);
         }
     }
@@ -108,7 +109,9 @@ public class ExperienceLanternMovementBehaviour implements MovementBehaviour {
         if (!experienceOrbs.isEmpty()) {
             for (var orb : experienceOrbs) {
                 if (orb.getDeltaMovement().length() <= .5) {
-                    var pushForce = pullForceMultiplier / orb.position().distanceTo(position);
+                    double distance = orb.position().distanceTo(position);
+                    if (distance < 0.01) continue;
+                    var pushForce = pullForceMultiplier / distance;
                     var directionToLantern = position.subtract(orb.position())
                             .normalize().multiply(pushForce, pushForce, pushForce);
                     orb.push(directionToLantern.x, directionToLantern.y, directionToLantern.z);

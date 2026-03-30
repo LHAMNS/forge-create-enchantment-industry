@@ -67,6 +67,12 @@ public class CustomNamePrintEntry implements PrintEntry {
     }
 
     @Override
+    public int requiredInkAmount(ItemStack target, FluidStack fluid) {
+        int configuredAmount = CeiDataMaps.getCustomNameInkAmount(fluid.getFluid());
+        return configuredAmount > 0 ? configuredAmount : PrintEntry.super.requiredInkAmount(target, fluid);
+    }
+
+    @Override
     public Fluid requiredInkType(ItemStack target) {
         return CeiFluids.EXPERIENCE.get();
     }
@@ -82,6 +88,9 @@ public class CustomNamePrintEntry implements PrintEntry {
         // Fallback without fluid info - just copy the name
         ItemStack result = material.copy();
         Component name = target.getHoverName();
+        if (CeiConfigs.SERVER.printingCustomNameAsItemName.get()) {
+            name = name.copy().withStyle(style -> style.withItalic(false));
+        }
         result.setHoverName(name);
         return result;
     }
@@ -95,6 +104,9 @@ public class CustomNamePrintEntry implements PrintEntry {
         Style fluidStyle = CeiDataMaps.getCustomNameStyle(fluid.getFluid());
         if (fluidStyle != null) {
             name.withStyle(fluidStyle);
+        }
+        if (CeiConfigs.SERVER.printingCustomNameAsItemName.get()) {
+            name.withStyle(style -> style.withItalic(false));
         }
 
         result.setHoverName(name);

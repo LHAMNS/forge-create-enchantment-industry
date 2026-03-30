@@ -19,8 +19,8 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
+import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceHelper;
 import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
-import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.foundation.advancement.CeiAdvancements;
 import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 
@@ -70,21 +70,23 @@ public class OpenEndedPipeMixin {
                         outputPos.getY() - pos.getY(),
                         outputPos.getZ() - pos.getZ()).scale(0.2);
                 var orbPos = VecHelper.getCenterOf(outputPos);
-                ExperienceFluid expfluid = CeiDataMaps.asExperienceFluid(fluid.getFluid());
-                if (expfluid == null) return;
-                int amount = fluid.getAmount();
+                ExperienceFluid expfluid = fluid.getFluid() instanceof ExperienceFluid experienceFluid ? experienceFluid : null;
+                int amount = ExperienceHelper.getExperienceFromFluid(fluid);
+                if (amount <= 0) return;
                 if (players.isEmpty()) {
-                    expfluid.awardOrDrop(null, slevel, orbPos, speed, amount);
+                    ExperienceHelper.awardOrDropExperience(null, slevel, orbPos, speed, amount, expfluid);
                 } else {
                     int partial = amount / players.size();
                     int left = amount % players.size();
                     players.forEach(player -> {
-                        CeiAdvancements.A_SHOWER_EXPERIENCE.getTrigger().trigger((ServerPlayer) player);
-                        expfluid.awardOrDrop(player, slevel, orbPos, speed, partial);
+                        if (player instanceof ServerPlayer serverPlayer) {
+                            CeiAdvancements.A_SHOWER_EXPERIENCE.getTrigger().trigger(serverPlayer);
+                        }
+                        ExperienceHelper.awardOrDropExperience(player, slevel, orbPos, speed, partial, expfluid);
                     });
                     if (left != 0) {
                         var lucky = players.get(world.random.nextInt(players.size()));
-                        expfluid.awardOrDrop(lucky, slevel, orbPos, speed, left);
+                        ExperienceHelper.awardOrDropExperience(lucky, slevel, orbPos, speed, left, expfluid);
                     }
                 }
                 ((OpenEndedPipe) (Object) this).provideHandler().ifPresent(f->f.getFluidInTank(0).setAmount(0));

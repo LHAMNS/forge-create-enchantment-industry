@@ -44,6 +44,9 @@ public class ComponentLabel extends Label {
     
     private MutableComponent computeTrimmedText(Component text, boolean trimFront, int maxWidthPx) {
         maxWidthPx -= font.width("...");
+        if (maxWidthPx <= 0) {
+            return Component.literal("...");
+        }
         int totalWidthPx = 0;
         Iterator<Component> texts = getComponentIterator(text);
         List<Component> result = new ArrayList<>();
@@ -74,7 +77,9 @@ public class ComponentLabel extends Label {
             }
             StringBuilder builder = new StringBuilder(content);
             for (int i = startIndex; trimFront ? i <= endIndex : i >= endIndex; i += step) {
-                String sub = builder.substring(trimFront ? i : startIndex, trimFront ? endIndex + 1 : i + 1);
+                String sub = trimFront
+                        ? builder.substring(i, endIndex + 1)
+                        : builder.substring(0, i + 1);
                 if (font.width(Component.literal(sub).setStyle(text.getStyle())) <= maxWidthPx) {
                     result.add(Component.literal(sub).setStyle(text.getStyle()));
                     break collect;

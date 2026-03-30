@@ -32,8 +32,6 @@ import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.fluids.FluidStack;
 import javax.annotation.Nonnull;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.FilteringFluidTankBehaviour;
-import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
-import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiTags;
 import plus.dragons.createenchantmentindustry.foundation.advancement.CeiAdvancements;
 import plus.dragons.createenchantmentindustry.foundation.advancement.CeiTriggers;
@@ -103,9 +101,10 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             printEntry = null;
         }
         else {
-            this.copyTarget = copyTarget;
-            matchPrintEntry(copyTarget);
-            tooExpensive = Printing.isTooExpensive(printEntry, copyTarget, CeiConfigs.SERVER.copierTankCapacity.get());
+            this.copyTarget = copyTarget.copy();
+            this.copyTarget.setCount(1);
+            matchPrintEntry(this.copyTarget);
+            tooExpensive = Printing.isTooExpensive(printEntry, this.copyTarget, CeiConfigs.SERVER.copierTankCapacity.get());
         }
         processingTicks = -1;
         notifyUpdate();
@@ -141,13 +140,15 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
                                                                       TransportedItemStackHandlerBehaviour handler) {
         if (handler.blockEntity.isVirtual())
             return PASS;
-        if (tooExpensive || copyTarget == null || printEntry == null)
+        if (copyTarget == null || printEntry == null)
             return PASS;
         if (!Printing.valid(printEntry,copyTarget,transported.stack))
             return PASS;
-        if (tank.isEmpty() || !Printing.isCorrectInk(printEntry, getCurrentFluidInTank(), copyTarget))
+        FluidStack currentFluid = getCurrentFluidInTank();
+        if (tank.isEmpty() || !Printing.isCorrectInk(printEntry, currentFluid, copyTarget))
             return PASS;
-        if (Printing.getRequiredAmountForItem(printEntry,copyTarget) == -1)
+        int requiredAmount = Printing.getRequiredAmountForItem(printEntry, copyTarget, currentFluid);
+        if (requiredAmount == -1 || requiredAmount > CeiConfigs.SERVER.copierTankCapacity.get())
             return PASS;
         return HOLD;
     }
@@ -157,7 +158,7 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         if (processingTicks > 0)
             return HOLD;
         // Re-validate conditions when processing is ready (ticks <= 0) or not started (-1)
-        if (tooExpensive || copyTarget == null || printEntry == null) {
+        if (copyTarget == null || printEntry == null) {
             processingTicks = -1;
             return PASS;
         }
@@ -168,8 +169,12 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
         if (tank.isEmpty() || !Printing.isCorrectInk(printEntry, getCurrentFluidInTank(), copyTarget))
             return HOLD;
         FluidStack fluid = getCurrentFluidInTank();
-        int requiredAmountForItem = Printing.getRequiredAmountForItem(printEntry, copyTarget);
+        int requiredAmountForItem = Printing.getRequiredAmountForItem(printEntry, copyTarget, fluid);
         if (requiredAmountForItem == -1) {
+            processingTicks = -1;
+            return PASS;
+        }
+        if (requiredAmountForItem > CeiConfigs.SERVER.copierTankCapacity.get()) {
             processingTicks = -1;
             return PASS;
         }
@@ -226,16 +231,11 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     @Override
     public void destroy() {
         super.destroy();
-        if (level instanceof ServerLevel serverLevel) {
+        if (level instanceof ServerLevel) {
             ItemStack heldItemStack = copyTarget;
             var pos = getBlockPos();
             if(heldItemStack != null)
                 Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), heldItemStack);
-            var fluidStack = tank.getPrimaryHandler().getFluid();
-            ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(fluidStack.getFluid());
-            if(expFluid != null) {
-                expFluid.drop(serverLevel, VecHelper.getCenterOf(pos), fluidStack.getAmount());
-            }
         }
     }
 
@@ -256,6 +256,8 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     public void writeSafe(CompoundTag tag) {
         super.writeSafe(tag);
         tag.putBoolean("tooExpensive", tooExpensive);
+        if (copyTarget != null)
+            tag.put("copyTarget", copyTarget.serializeNBT());
     }
 
     @Override

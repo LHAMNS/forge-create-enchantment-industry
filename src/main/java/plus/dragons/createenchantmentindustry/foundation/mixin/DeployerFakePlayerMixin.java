@@ -16,6 +16,8 @@ public class DeployerFakePlayerMixin {
 
     @Inject(method = "deployerKillsDoNotSpawnXP", at = @At(value = "INVOKE", target = "Lnet/minecraftforge/event/entity/living/LivingExperienceDropEvent;setCanceled(Z)V"))
     private static void deployerKillsSpawnXpNuggets(LivingExperienceDropEvent event, CallbackInfo ci) {
+        if (CeiConfigs.SERVER.deployerCollectXp.get())
+            return;
 
         DeployerFakePlayer player = (DeployerFakePlayer) event.getAttackingPlayer();
         assert player != null;
@@ -27,8 +29,9 @@ public class DeployerFakePlayerMixin {
         int xp = event.getDroppedExperience();
 
         if(MendingByDeployer.canItemBeMended(deployerTool)) {
+                int remainingXp = MendingByDeployer.getNewXp(xp, deployerTool);
                 player.getInventory().setItem(0, MendingByDeployer.mendItem(xp, deployerTool));
-                xp = MendingByDeployer.getNewXp(xp, deployerTool);
+                xp = remainingXp;
                 event.setDroppedExperience(xp);
         }
 

@@ -51,7 +51,7 @@ public class GrindstoneDrainBlock extends HorizontalKineticBlock implements IBE<
     @Override
     public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hitResult) {
         if (hitResult.getDirection() == Direction.UP)
-            return this.grindstone.use(state, level, pos, player, hand, hitResult);
+            return this.grindstone.use(level.getBlockState(pos.above()), level, pos.above(), player, hand, hitResult);
         return super.use(state, level, pos, player, hand, hitResult);
     }
 

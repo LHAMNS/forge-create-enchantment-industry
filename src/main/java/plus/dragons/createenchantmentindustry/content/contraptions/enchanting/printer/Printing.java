@@ -19,7 +19,11 @@ public class Printing {
     }
 
     public static int getRequiredAmountForItem(PrintEntry printEntry, ItemStack target) {
-        return printEntry.requiredInkAmount(target);
+        return getRequiredAmountForItem(printEntry, target, new FluidStack(printEntry.requiredInkType(target), 1));
+    }
+
+    public static int getRequiredAmountForItem(PrintEntry printEntry, ItemStack target, FluidStack availableFluid) {
+        return printEntry.requiredInkAmount(target, availableFluid);
     }
     
     @SuppressWarnings("deprecation") //Fluid Tags are still useful for mod interaction
@@ -27,6 +31,11 @@ public class Printing {
         return printEntry.acceptsFluid(fluidStack, target);
     }
 
+    /**
+     * Perform a print operation. This method mutates both {@code stack} (shrinks by 1)
+     * and {@code availableFluid} (shrinks by {@code requiredAmount}).
+     * Callers are expected to write the mutated fluid back to the tank after this call.
+     */
     public static ItemStack print(PrintEntry printEntry, ItemStack target, int requiredAmount, ItemStack stack, FluidStack availableFluid) {
         var copy = stack.copy();
         copy.setCount(1);
@@ -37,7 +46,7 @@ public class Printing {
     }
 
     public static boolean isTooExpensive(PrintEntry printEntry, ItemStack target, int limit) {
-        return printEntry.isTooExpensive(target,limit);
+        return getRequiredAmountForItem(printEntry, target) > limit;
     }
 
 

@@ -34,15 +34,22 @@ public class Disenchanting {
                     var tank = be.getInternalTank();
                     int amount = recipe.getExperience();
                     var fluidStack = new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), itemStack.getCount() * amount);
+                    int inserted;
                     tank.allowInsertion();
-                    int inserted = tank.getPrimaryHandler().fill(fluidStack, IFluidHandler.FluidAction.SIMULATE) / amount;
-                    tank.forbidInsertion();
+                    try {
+                        inserted = tank.getPrimaryHandler().fill(fluidStack, IFluidHandler.FluidAction.SIMULATE) / amount;
+                    } finally {
+                        tank.forbidInsertion();
+                    }
                     ItemStack ret = itemStack.copy();
                     if (!simulate) {
                         tank.allowInsertion();
-                        fluidStack = new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), inserted * amount);
-                        tank.getPrimaryHandler().fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
-                        tank.forbidInsertion();
+                        try {
+                            fluidStack = new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), inserted * amount);
+                            tank.getPrimaryHandler().fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
+                        } finally {
+                            tank.forbidInsertion();
+                        }
                     }
                     ret.shrink(inserted);
                     return ret;

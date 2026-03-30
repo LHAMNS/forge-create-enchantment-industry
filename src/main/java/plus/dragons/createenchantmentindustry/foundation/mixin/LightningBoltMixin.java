@@ -25,6 +25,9 @@ public abstract class LightningBoltMixin extends Entity {
     @Unique
     private static final String cei$LIGHTNING_BOLT_EXPERIENCE_CHARGE_KEY = "ExperienceCharge";
 
+    @Unique
+    private static final String cei$LIGHTNING_BOLT_CONVERTED_KEY = "ExperienceConverted";
+
     @Shadow
     protected abstract BlockPos getStrikePosition();
 
@@ -35,10 +38,15 @@ public abstract class LightningBoltMixin extends Entity {
     @Inject(method = "tick", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LightningBolt;clearCopperOnLightningStrike(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V"))
     private void cei$chargeExperienceOnLightingStrike(CallbackInfo ci) {
         Level level = this.level();
-        if (level.isClientSide) return;
-        if (!this.getPersistentData().getBoolean(cei$LIGHTNING_BOLT_EXPERIENCE_CHARGE_KEY))
-            if (this.random.nextFloat() > CeiConfigs.SERVER.regularLightningStrikeTransformXpBlockChance.get())
-                return;
+        if (level.isClientSide)
+            return;
+        if (this.getPersistentData().getBoolean(cei$LIGHTNING_BOLT_EXPERIENCE_CHARGE_KEY))
+            return;
+        this.getPersistentData().putBoolean(cei$LIGHTNING_BOLT_EXPERIENCE_CHARGE_KEY, true);
+        if (this.random.nextFloat() > CeiConfigs.SERVER.regularLightningStrikeTransformXpBlockChance.get())
+            return;
+        if (this.getPersistentData().getBoolean(cei$LIGHTNING_BOLT_CONVERTED_KEY))
+            return;
         BlockPos pos = this.getStrikePosition();
         BlockState blockstate = level.getBlockState(pos);
         // Check forge:lightning_rods tag instead of only vanilla LightningRodBlock
@@ -48,6 +56,7 @@ public abstract class LightningBoltMixin extends Entity {
         }
 
         if (blockstate.is(AllBlocks.EXPERIENCE_BLOCK.get())) {
+            this.getPersistentData().putBoolean(cei$LIGHTNING_BOLT_CONVERTED_KEY, true);
             level.setBlockAndUpdate(pos, CeiBlocks.SUPER_EXPERIENCE_BLOCK.getDefaultState());
             BlockPos.MutableBlockPos mutable = pos.mutable();
             int i = level.random.nextInt(3) + 3;

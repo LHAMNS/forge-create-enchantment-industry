@@ -57,6 +57,11 @@ public class MechanicalGrindstoneBlock extends RotatedPillarKineticBlock impleme
                 var cap = drain.getCapability(ForgeCapabilities.ITEM_HANDLER, null);
                 if (cap.isPresent()) {
                     IItemHandler handler = cap.orElseThrow(IllegalStateException::new);
+                    if (level.isClientSide) {
+                        return handler.extractItem(3000, 64, true).isEmpty()
+                                ? InteractionResult.PASS
+                                : InteractionResult.SUCCESS;
+                    }
                     ItemStack extractItem = handler.extractItem(3000, 64, false);
                     if (!extractItem.isEmpty()) {
                         player.setItemInHand(hand, extractItem);

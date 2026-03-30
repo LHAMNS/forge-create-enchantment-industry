@@ -30,30 +30,7 @@ public abstract class FluidTankBlockMixin extends Block implements IBE<BasinBloc
     // Support Experience Drop with Block Break
     @Inject(method = "onRemove", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;removeBlockEntity(Lnet/minecraft/core/BlockPos;)V"), cancellable = true)
     private void injected(BlockState state, Level level, BlockPos pos, BlockState newState, boolean var4, CallbackInfo ci) {
-        if(!(level instanceof ServerLevel serverLevel))
-            return;
-        BlockEntity be = level.getBlockEntity(pos);
-        if (!(be instanceof FluidTankBlockEntity tankBE) || be instanceof CreativeFluidTankBlockEntity)
-            return;
-        var controllerBE = tankBE.getControllerBE();
-        if (controllerBE == null) return;
-        var fluidStack = controllerBE.getFluid(0);
-        var fluidStackBackup = fluidStack.copy();
-        var maxSize = controllerBE.getTotalTankSize();
-        ExperienceFluid expFluid = CeiDataMaps.asExperienceFluid(fluidStack.getFluid());
-        if (expFluid != null) {
-            level.removeBlockEntity(pos);
-            ConnectivityHandler.splitMulti(tankBE);
-            if (maxSize == 1) {
-                expFluid.drop(serverLevel, VecHelper.getCenterOf(pos), fluidStackBackup.getAmount());
-            } else {
-                int newCapacity = (maxSize - 1) * FluidTankBlockEntity.getCapacityMultiplier();
-                int leftover = fluidStackBackup.getAmount() - newCapacity;
-                if(leftover > 0) {
-                    expFluid.drop(serverLevel, VecHelper.getCenterOf(pos), leftover);
-                }
-            }
-            ci.cancel();
-        }
+        // ConnectivityHandlerMixin already handles the tank-split XP spill path.
+        // Leaving the original FluidTankBlock#onRemove flow intact prevents double drops.
     }
 }

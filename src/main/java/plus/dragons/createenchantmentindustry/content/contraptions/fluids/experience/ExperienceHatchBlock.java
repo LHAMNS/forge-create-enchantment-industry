@@ -121,8 +121,8 @@ public class ExperienceHatchBlock extends HorizontalDirectionalBlock
             blockEntity.setChanged();
             if (level instanceof ServerLevel serverLevel)
                 serverLevel.getChunkSource().blockChanged(blockEntity.getBlockPos());
-            experience = ExperienceHelper.getExperienceFromFluid(new FluidStack(fluid.getFluid(), filled));
-            player.giveExperiencePoints(-experience);
+            int xpToDeduct = Math.min(ExperienceHelper.getExperienceFromFluid(new FluidStack(fluid.getFluid(), filled)), experience);
+            player.giveExperiencePoints(-xpToDeduct);
             CeiAdvancements.SPIRIT_TAKING.getTrigger().trigger((ServerPlayer) player);
             return InteractionResult.SUCCESS;
         }

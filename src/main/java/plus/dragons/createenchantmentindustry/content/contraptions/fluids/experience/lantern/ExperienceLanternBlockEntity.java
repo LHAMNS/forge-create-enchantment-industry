@@ -13,6 +13,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
@@ -137,17 +138,19 @@ public class ExperienceLanternBlockEntity extends SmartBlockEntity implements IH
     }
 
     protected void pullExp() {
+        if (level.getGameTime() % 2 != 0) return;
         int pullRadius = CeiConfigs.SERVER.experienceLanternPullRadius.get();
         double pullForceMultiplier = CeiConfigs.SERVER.experienceLanternPullForceMultiplier.get();
         List<ExperienceOrb> experienceOrbs = level.getEntitiesOfClass(
                 ExperienceOrb.class, effectiveAABB.inflate(pullRadius));
         if (!experienceOrbs.isEmpty()) {
+            Vec3 center = getBlockPos().getCenter();
             for (var orb : experienceOrbs) {
                 if (orb.getDeltaMovement().length() <= .5) {
-                    double distance = orb.position().distanceTo(getBlockPos().getCenter());
+                    double distance = orb.position().distanceTo(center);
                     if (distance < 0.01) continue;
                     var pushForce = pullForceMultiplier / distance;
-                    var directionToLantern = getBlockPos().getCenter().subtract(orb.position())
+                    var directionToLantern = center.subtract(orb.position())
                             .normalize().multiply(pushForce, pushForce, pushForce);
                     orb.push(directionToLantern.x, directionToLantern.y, directionToLantern.z);
                 }
@@ -174,16 +177,6 @@ public class ExperienceLanternBlockEntity extends SmartBlockEntity implements IH
                 return tank.getCapability().cast();
         }
         return super.getCapability(cap, side);
-    }
-
-    @Override
-    public void invalidate() {
-        super.invalidate();
-    }
-
-    @Override
-    public void reviveCaps() {
-        super.reviveCaps();
     }
 
     @Override
