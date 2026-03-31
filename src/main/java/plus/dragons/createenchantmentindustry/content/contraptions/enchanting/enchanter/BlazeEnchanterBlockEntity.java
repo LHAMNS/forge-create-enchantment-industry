@@ -98,6 +98,13 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     protected EnchanterBehaviour enchanterBehaviour;
     Map<Direction, LazyOptional<EnchantingItemHandler>> itemHandlers;
     boolean sendParticles;
+    /** Cached lightning rod position from the last full area scan. Null if no rod was found. */
+    @Nullable
+    private BlockPos cachedLightningRodPos;
+    /** Game time (in ticks) when the lightning rod cache was last populated. */
+    private long lightningRodCacheTime = -1;
+    /** How long (in ticks) the lightning rod cache stays valid before a full re-scan. 200 ticks = 10 seconds. */
+    private static final long LIGHTNING_ROD_CACHE_TTL = 200L;
     LerpedFloat headAnimation;
     LerpedFloat headAngle;
     Random random = new Random();
@@ -727,9 +734,16 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         return superExperience;
     }
 
+    /**
+     * Maximum super experience that can be accumulated.
+     * Sized to hold a reasonable stockpile (~2 stacks of super nuggets or ~2 super blocks)
+     * without allowing unbounded accumulation from repeated right-clicks.
+     */
+    private static final int MAX_SUPER_EXPERIENCE = 64;
+
     /** Add super experience from a special ExperienceFuel item. */
     public void addSuperExperience(int amount) {
-        this.superExperience += amount;
+        this.superExperience = Math.min(this.superExperience + amount, MAX_SUPER_EXPERIENCE);
         notifyUpdate();
     }
 
@@ -796,18 +810,13 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     @Override
     public void writeSafe(CompoundTag tag) {
         super.writeSafe(tag);
+        // Only persist structural/configuration state for schematics and contraptions.
+        // Transient runtime state (ProcessingTicks, SuperExperience, IsCreative,
+        // EnchantmentSeed, EnchantLevel, SnapshotCostCoeff, HeldItem) is excluded.
         tag.put("TargetItem", targetItem.serializeNBT());
         tag.putBoolean("Goggles", goggles);
-        tag.putInt("ProcessingTicks", processingTicks);
-        tag.putInt("SuperExperience", superExperience);
-        tag.putBoolean("IsCreative", isCreative);
-        tag.putLong("EnchantmentSeed", enchantmentSeed);
-        tag.putInt("EnchantLevel", enchantLevel);
-        tag.putFloat("SnapshotCostCoeff", snapshotCostCoefficient);
         if (!templateItem.isEmpty())
             tag.put("TemplateItem", templateItem.serializeNBT());
-        if (heldItem != null)
-            tag.put("HeldItem", heldItem.serializeNBT());
     }
 
     @Override
@@ -950,12 +959,30 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     }
 
     /**
-     * Search for a lightning rod near the strike position.
+     * Search for a lightning rod near the strike position, using a time-based cache
+     * to avoid scanning 4225 columns on every enchant cycle.
+     * <p>
+     * If the cache is recent (within {@link #LIGHTNING_ROD_CACHE_TTL} ticks), validates
+     * the cached position with a single {@code getBlockState} call. If the cached block
+     * is no longer a lightning rod, falls through to a full re-scan.
      */
     @Nullable
     private BlockPos findNearbyLightningRod(ServerLevel level, BlockPos strikePos) {
+        long gameTime = level.getGameTime();
+
+        // Try to use the cached position if still fresh
+        if (cachedLightningRodPos != null && (gameTime - lightningRodCacheTime) < LIGHTNING_ROD_CACHE_TTL) {
+            BlockState cachedState = level.getBlockState(cachedLightningRodPos);
+            if (cachedState.is(CeiTags.LIGHTNING_RODS) || cachedState.getBlock() instanceof LightningRodBlock) {
+                return cachedLightningRodPos;
+            }
+            // Cached rod was removed; fall through to full scan
+        }
+
+        // Full area scan
         int searchRadius = 32;
         BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
+        BlockPos found = null;
         for (int dx = -searchRadius; dx <= searchRadius; dx++) {
             for (int dz = -searchRadius; dz <= searchRadius; dz++) {
                 mutable.set(strikePos.getX() + dx, 0, strikePos.getZ() + dz);
@@ -963,11 +990,17 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
                 mutable.setY(surfaceY);
                 BlockState state = level.getBlockState(mutable);
                 if (state.is(CeiTags.LIGHTNING_RODS) || state.getBlock() instanceof LightningRodBlock) {
-                    return mutable.immutable();
+                    found = mutable.immutable();
+                    break;
                 }
             }
+            if (found != null) break;
         }
-        return null;
+
+        // Update cache regardless of result (null means no rod found)
+        cachedLightningRodPos = found;
+        lightningRodCacheTime = gameTime;
+        return found;
     }
 
     public void updateHeatLevel(BlazeEnchanterBlock.HeatLevel heatLevel) {

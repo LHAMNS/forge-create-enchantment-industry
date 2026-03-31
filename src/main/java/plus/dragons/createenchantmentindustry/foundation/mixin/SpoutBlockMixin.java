@@ -17,7 +17,7 @@ import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experi
 import javax.annotation.ParametersAreNonnullByDefault;
 
 @ParametersAreNonnullByDefault
-@Mixin(value = SpoutBlock.class)
+@Mixin(value = SpoutBlock.class, remap = false)
 public abstract class SpoutBlockMixin extends Block implements IWrenchable, IBE<SpoutBlockEntity> {
     public SpoutBlockMixin(Properties pProperties) {
         super(pProperties);
@@ -28,7 +28,7 @@ public abstract class SpoutBlockMixin extends Block implements IWrenchable, IBE<
      * @reason Drop experience fluid as XP orbs when spout is broken
      */
     @SuppressWarnings("deprecation")
-    @Overwrite
+    @Overwrite(remap = true)
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (!state.hasBlockEntity() || state.getBlock() == newState.getBlock())
             return;

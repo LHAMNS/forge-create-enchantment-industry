@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 import java.util.UUID;
 
-@Mixin(AdvancementBehaviour.class)
+@Mixin(value = AdvancementBehaviour.class, remap = false)
 public interface AdvancementBehaviourAccessor {
 
     @Accessor(remap = false)

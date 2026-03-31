@@ -25,7 +25,7 @@ import plus.dragons.createenchantmentindustry.foundation.advancement.CeiAdvancem
 import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 
 
-@Mixin(value = OpenEndedPipe.class)
+@Mixin(value = OpenEndedPipe.class, remap = false)
 public class OpenEndedPipeMixin {
 
     @Shadow(remap = false)
@@ -62,8 +62,10 @@ public class OpenEndedPipeMixin {
                     cir.setReturnValue(true);
                     return;
                 }
-                if (!(world instanceof ServerLevel slevel))
+                if (!(world instanceof ServerLevel slevel)) {
+                    cir.setReturnValue(false);
                     return;
+                }
 
                 var players = world.getEntitiesOfClass(Player.class, aoe, LivingEntity::isAlive);
                 var speed = new Vec3(outputPos.getX() - pos.getX(),

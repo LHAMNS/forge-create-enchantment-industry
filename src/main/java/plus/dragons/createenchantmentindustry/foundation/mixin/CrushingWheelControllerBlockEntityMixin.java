@@ -18,7 +18,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 
-@Mixin(CrushingWheelControllerBlockEntity.class)
+@Mixin(value = CrushingWheelControllerBlockEntity.class, remap = false)
 public class CrushingWheelControllerBlockEntityMixin {
 
     @Shadow(remap = false)

@@ -22,7 +22,7 @@ import java.util.Collection;
  * When any SmartBlockEntity is destroyed, iterates all fluid tank behaviours
  * and drops any experience fluid as XP orbs.
  */
-@Mixin(SmartBlockEntity.class)
+@Mixin(value = SmartBlockEntity.class, remap = false)
 public abstract class SmartBlockEntityMixin extends BlockEntity {
 
     @Shadow(remap = false)
