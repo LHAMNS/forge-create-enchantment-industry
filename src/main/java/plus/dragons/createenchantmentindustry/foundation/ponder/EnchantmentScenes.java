@@ -18,6 +18,7 @@ import net.createmod.ponder.api.scene.SceneBuilder;
 import net.createmod.ponder.api.scene.SceneBuildingUtil;
 import net.createmod.ponder.api.scene.Selection;
 import net.minecraft.core.BlockPos;
+import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.Enchanting;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
@@ -662,9 +663,9 @@ public class EnchantmentScenes {
     }
 
     private static void enchantItem(ItemStack itemStack, Enchantment enchantment, int level) {
-        var m = EnchantmentHelper.getEnchantments(itemStack);
+        var m = Enchanting.getAllEnchantments(itemStack);
         m.put(enchantment, level);
-        EnchantmentHelper.setEnchantments(m, itemStack);
+        Enchanting.setAllEnchantments(m, itemStack);
     }
 
     private static void enchantRandomly(ItemStack itemStack) {
@@ -677,7 +678,7 @@ public class EnchantmentScenes {
         var ret = CeiItems.ENCHANTING_GUIDE.asStack();
         ret.getOrCreateTag().putInt("index", 0);
         var book = Items.ENCHANTED_BOOK.getDefaultInstance();
-        EnchantmentHelper.setEnchantments(Map.of(enchantment, level), book);
+        Enchanting.setAllEnchantments(Map.of(enchantment, level), book);
         ret.getOrCreateTag().put("target", book.serializeNBT());
         return ret;
     }

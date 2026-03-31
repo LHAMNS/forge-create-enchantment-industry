@@ -129,9 +129,9 @@ public class Enchanting {
     }
 
     public static void enchantItem(ItemStack itemStack, Pair<Enchantment, Integer> enchantment) {
-        var map = EnchantmentHelper.getEnchantments(itemStack);
+        var map = getAllEnchantments(itemStack);
         map.put(enchantment.getFirst(), enchantment.getSecond());
-        EnchantmentHelper.setEnchantments(map, itemStack);
+        setAllEnchantments(map, itemStack);
     }
     
     public static int expPointFromLevel(int level) {
@@ -182,10 +182,10 @@ public class Enchanting {
         }
         if (!curses.isEmpty()) {
             Enchantment curse = curses.get(random.nextInt(curses.size()));
-            Map<Enchantment, Integer> existing = EnchantmentHelper.getEnchantments(itemStack);
+            Map<Enchantment, Integer> existing = getAllEnchantments(itemStack);
             if (!existing.containsKey(curse)) {
                 existing.put(curse, 1);
-                EnchantmentHelper.setEnchantments(existing, itemStack);
+                setAllEnchantments(existing, itemStack);
             }
         }
     }

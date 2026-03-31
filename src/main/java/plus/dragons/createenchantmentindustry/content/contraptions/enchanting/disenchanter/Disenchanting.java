@@ -94,7 +94,7 @@ public class Disenchanting {
                 result.getOrCreateTag().put("display", oldTag.getCompound("display").copy());
             }
         } else {
-            EnchantmentHelper.setEnchantments(curses, result);
+            Enchanting.setAllEnchantments(curses, result);
             result.setRepairCost(0);
             for (int i = 0; i < curses.size(); ++i) {
                 result.setRepairCost(AnvilMenu.calculateIncreasedRepairCost(result.getBaseRepairCost()));
