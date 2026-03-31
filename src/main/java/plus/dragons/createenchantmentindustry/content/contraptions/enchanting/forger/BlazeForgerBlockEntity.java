@@ -404,8 +404,8 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
         super.destroy();
         if (level instanceof ServerLevel) {
             var pos = getBlockPos();
-            // Drop inventory contents
-            for (int i = 0; i < inventory.getSlots(); i++) {
+            // Drop inventory contents (all 6 slots including preview slots 4-5)
+            for (int i = 0; i < 6; i++) {
                 ItemStack stack = inventory.getStackInSlot(i);
                 if (!stack.isEmpty()) {
                     net.minecraft.world.Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack);

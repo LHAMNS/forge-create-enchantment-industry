@@ -1,6 +1,5 @@
 package plus.dragons.createenchantmentindustry.entry;
 
-import plus.dragons.createenchantmentindustry.EnchantmentIndustry;
 import com.simibubi.create.content.processing.recipe.ProcessingRecipeBuilder;
 import com.simibubi.create.content.processing.recipe.ProcessingRecipeSerializer;
 import com.simibubi.create.foundation.recipe.IRecipeTypeInfo;

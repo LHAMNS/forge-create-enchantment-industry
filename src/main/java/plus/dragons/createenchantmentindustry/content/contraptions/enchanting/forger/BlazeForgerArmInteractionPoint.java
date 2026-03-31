@@ -35,7 +35,11 @@ public class BlazeForgerArmInteractionPoint extends ArmInteractionPoint {
         if (level.getBlockEntity(pos) instanceof BlazeForgerBlockEntity forger) {
             // Extract from output slots (index 2, 3)
             int actualSlot = slot + 2;
-            return forger.inventory.extractItem(actualSlot, amount, simulate);
+            ItemStack extracted = forger.inventory.extractItem(actualSlot, amount, simulate);
+            if (!extracted.isEmpty() && !simulate) {
+                forger.notifyUpdate();
+            }
+            return extracted;
         }
         return ItemStack.EMPTY;
     }

@@ -239,8 +239,26 @@ public class BlazeForgerInventory extends ItemStackHandler {
         }
         // ── Non-template handling ─────────────────────────────────────
         else {
-            Map<Enchantment, Integer> baseEnchantments = EnchantmentHelper.getEnchantments(base);
-            Map<Enchantment, Integer> additionEnchantments = EnchantmentHelper.getEnchantments(addition);
+            Map<Enchantment, Integer> baseEnchantments;
+            if (baseIsBook) {
+                baseEnchantments = EnchantmentHelper.deserializeEnchantments(
+                        base.getOrCreateTag().getList("StoredEnchantments", 10));
+                if (baseEnchantments.isEmpty()) {
+                    baseEnchantments = EnchantmentHelper.getEnchantments(base);
+                }
+            } else {
+                baseEnchantments = EnchantmentHelper.getEnchantments(base);
+            }
+            Map<Enchantment, Integer> additionEnchantments;
+            if (additionIsBook) {
+                additionEnchantments = EnchantmentHelper.deserializeEnchantments(
+                        addition.getOrCreateTag().getList("StoredEnchantments", 10));
+                if (additionEnchantments.isEmpty()) {
+                    additionEnchantments = EnchantmentHelper.getEnchantments(addition);
+                }
+            } else {
+                additionEnchantments = EnchantmentHelper.getEnchantments(addition);
+            }
 
             // Both are enchanted books - merge them
             if (baseIsBook && additionIsBook) {
@@ -342,7 +360,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
                 base = new ItemStack(Items.BOOK);
                 stacks.set(4, base);
             } else {
-                EnchantmentHelper.setEnchantments(remaining, base);
+                setEnchantmentsCorrectly(remaining, base);
                 stacks.set(4, base);
             }
         } else {
@@ -413,7 +431,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
         if (resultEnchantments.isEmpty())
             return false;
 
-        EnchantmentHelper.setEnchantments(resultEnchantments, enchantedBook);
+        setEnchantmentsCorrectly(resultEnchantments, enchantedBook);
         stacks.set(4, enchantedBook);
         this.cost += addedCost;
         return true;
@@ -474,7 +492,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
         if (!applied)
             return false;
 
-        EnchantmentHelper.setEnchantments(resultEnchantments, base);
+        setEnchantmentsCorrectly(resultEnchantments, base);
         stacks.set(4, base);
         this.cost += addedCost;
         return true;
@@ -549,10 +567,26 @@ public class BlazeForgerInventory extends ItemStackHandler {
         if (!applied)
             return false;
 
-        EnchantmentHelper.setEnchantments(resultEnchantments, base);
+        setEnchantmentsCorrectly(resultEnchantments, base);
         stacks.set(4, base);
         this.cost += addedCost;
         return true;
+    }
+
+    /**
+     * Writes enchantments to the correct NBT tag based on item type.
+     * Enchanted books use "StoredEnchantments", all other items use "Enchantments".
+     */
+    private static void setEnchantmentsCorrectly(Map<Enchantment, Integer> enchantments, ItemStack stack) {
+        EnchantmentHelper.setEnchantments(enchantments, stack);
+        if (stack.is(Items.ENCHANTED_BOOK)) {
+            CompoundTag tag = stack.getOrCreateTag();
+            // setEnchantments writes to "Enchantments"; move to "StoredEnchantments" for books
+            if (tag.contains("Enchantments")) {
+                tag.put("StoredEnchantments", tag.getList("Enchantments", 10).copy());
+                tag.remove("Enchantments");
+            }
+        }
     }
 
     protected void applyRepairCost(ItemStack base, ItemStack addition) {

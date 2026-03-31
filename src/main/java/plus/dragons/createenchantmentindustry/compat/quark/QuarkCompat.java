@@ -46,7 +46,7 @@ public class QuarkCompat {
             @SuppressWarnings("all")
             @Override
             public boolean match(@Nonnull ItemStack toPrint) {
-                return ForgeRegistries.ITEMS.getHolder(toPrint.getItem()).get().is(id);
+                return ForgeRegistries.ITEMS.getHolder(toPrint.getItem()).map(holder -> holder.is(id)).orElse(false);
             }
 
             @Override

@@ -14,7 +14,9 @@ public class MendingByDeployer {
     }
     
     public static int getRequiredAmountForItem(ItemStack stack) {
-        return Mth.ceil(stack.getDamageValue() / stack.getXpRepairRatio());
+        float ratio = stack.getXpRepairRatio();
+        if (ratio <= 0) return Integer.MAX_VALUE;
+        return Mth.ceil(stack.getDamageValue() / ratio);
     }
     public static int getNewXp(int xpAmount, ItemStack stack) {
         int requiredAmount = getRequiredAmountForItem(stack);

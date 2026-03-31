@@ -23,7 +23,7 @@ public class TargetEnchantmentDisplaySource extends SingleLineDisplaySource {
         EnchantmentEntry entry = Enchanting.getTargetEnchantment(blazeEnchanter.targetItem, blazeEnchanter.hyper());
         if(entry == null || !entry.valid()){
             return EnchantmentIndustry.LANG.translate("gui.goggles.blaze_enchanter.invalid_target").component();
-        } else return (MutableComponent) entry.getFirst().getFullname(entry.getSecond());
+        } else return entry.getFirst().getFullname(entry.getSecond()).copy();
     }
 
     @Override

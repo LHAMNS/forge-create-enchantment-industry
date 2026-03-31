@@ -10,6 +10,7 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import plus.dragons.createenchantmentindustry.EnchantmentIndustry;
 import plus.dragons.createenchantmentindustry.entry.CeiItems;
 import plus.dragons.createenchantmentindustry.entry.CeiTags;
+import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -47,8 +48,7 @@ public class Enchanting {
         if(itemStack.is(UNENCHANTABLE)) return null;
         if(!UNENCHANTABLE_CONDITIONS.isEmpty()){
             if(UNENCHANTABLE_CONDITIONS.stream()
-                    .map(itemStackPredicate -> itemStackPredicate.test(itemStack))
-                    .reduce((b1,b2)->b1||b2).get()) return null;
+                    .anyMatch(p -> p.test(itemStack))) return null;
         }
 
         var entry = getTargetEnchantment(targetItem, hyper);
@@ -78,9 +78,11 @@ public class Enchanting {
 
         if (!enchantment.canEnchant(toCheck))
             return null;
-        for (var e : modified.entrySet()) {
-            if (!e.getKey().isCompatibleWith(enchantment))
-                return null;
+        if (!CeiConfigs.SERVER.ignoreEnchantmentCompatibility.get()) {
+            for (var e : modified.entrySet()) {
+                if (!e.getKey().isCompatibleWith(enchantment))
+                    return null;
+            }
         }
         return entry;
     }
