@@ -119,6 +119,8 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
         boolean onClient = level.isClientSide && !isVirtual();
 
         if (onClient) {
+            if (processingTime > 0)
+                processingTime--;
             blazeTick();
         }
 

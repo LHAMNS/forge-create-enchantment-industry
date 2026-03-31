@@ -97,7 +97,7 @@ public class GrindstoneHelper {
         } else if (top.getCount() <= 1 && bottom.getCount() <= 1) {
             if (topEmpty || bottomEmpty) {
                 ItemStack input = topEmpty ? bottom : top;
-                return !input.isEnchanted() && !EnchantmentHelper.getEnchantments(input).isEmpty()
+                return !input.isEnchanted() && !Enchanting.getAllEnchantments(input).isEmpty()
                         ? ItemStack.EMPTY
                         : hasAnyEnchantments(input) ? removeNonCursesFrom(input.copy()) : ItemStack.EMPTY;
             } else {
@@ -109,7 +109,7 @@ public class GrindstoneHelper {
     }
 
     private static boolean hasAnyEnchantments(ItemStack stack) {
-        return !EnchantmentHelper.getEnchantments(stack).isEmpty();
+        return !Enchanting.getAllEnchantments(stack).isEmpty();
     }
 
     private static ItemStack mergeItems(ItemStack top, ItemStack bottom) {
@@ -140,8 +140,8 @@ public class GrindstoneHelper {
     }
 
     private static void mergeEnchantsFrom(ItemStack top, ItemStack bottom) {
-        Map<Enchantment, Integer> topEnchantments = EnchantmentHelper.getEnchantments(top);
-        Map<Enchantment, Integer> bottomEnchantments = EnchantmentHelper.getEnchantments(bottom);
+        Map<Enchantment, Integer> topEnchantments = Enchanting.getAllEnchantments(top);
+        Map<Enchantment, Integer> bottomEnchantments = Enchanting.getAllEnchantments(bottom);
 
         for (Map.Entry<Enchantment, Integer> entry : bottomEnchantments.entrySet()) {
             Enchantment enchantment = entry.getKey();
@@ -153,7 +153,7 @@ public class GrindstoneHelper {
     }
 
     public static ItemStack removeNonCursesFrom(ItemStack input) {
-        Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(input);
+        Map<Enchantment, Integer> enchantments = Enchanting.getAllEnchantments(input);
         enchantments.entrySet().removeIf(entry -> !entry.getKey().isCurse());
         EnchantmentHelper.setEnchantments(enchantments, input);
 

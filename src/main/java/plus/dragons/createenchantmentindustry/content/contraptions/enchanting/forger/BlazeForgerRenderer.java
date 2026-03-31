@@ -15,7 +15,7 @@ import net.minecraft.world.level.Level;
 
 /**
  * Renderer for the Blaze Forger block entity.
- * Renders items from inventory slots 0-5 (inputs, outputs, and preview/result) floating
+ * Renders items from inventory slots 0-3 (2 input + 2 output) floating
  * above the block with vertical bobbing and horizontal rotation.
  * <p>
  * Ported from upstream BlazeForgerRenderer, adapted to Forge 1.20.1
@@ -32,7 +32,7 @@ public class BlazeForgerRenderer extends SmartBlockEntityRenderer<BlazeForgerBlo
                               MultiBufferSource bufferSource, int light, int overlay) {
         super.renderSafe(blockEntity, partialTicks, poseStack, bufferSource, light, overlay);
 
-        for (int slot = 0; slot < 6; slot++) {
+        for (int slot = 0; slot < 4; slot++) {
             ItemStack item = blockEntity.inventory.getStackInSlot(slot);
             if (item.isEmpty())
                 continue;
@@ -52,10 +52,11 @@ public class BlazeForgerRenderer extends SmartBlockEntityRenderer<BlazeForgerBlo
         float renderTicks = AnimationTickHolder.getRenderTime(level);
 
         // Vertical bobbing animation: idle uses a static per-slot offset,
-        // processing uses a time-varying sine wave
-        float animation = processingTime == -1
+        // processing uses a client-side renderTime-based sine wave (processingTime is
+        // only decremented on the server, so it cannot drive smooth client animation)
+        float animation = processingTime <= 0
                 ? Mth.sin(slot * Mth.PI / -2f)
-                : Mth.sin((processingTime + partialTicks) / 20f + slot * Mth.PI);
+                : Mth.sin(renderTicks / 20f + slot * Mth.PI);
         float height = 1.25f + (1 + animation) * .25f;
 
         // Horizontal rotation around X and Z axes, offset per slot so items don't overlap

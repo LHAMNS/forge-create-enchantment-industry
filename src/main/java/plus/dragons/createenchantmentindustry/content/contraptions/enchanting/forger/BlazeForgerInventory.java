@@ -118,6 +118,8 @@ public class BlazeForgerInventory extends ItemStackHandler {
     protected void applyResult() {
         stacks.set(2, stacks.get(4).copy());
         stacks.set(3, stacks.get(5).copy());
+        stacks.set(4, ItemStack.EMPTY);
+        stacks.set(5, ItemStack.EMPTY);
         clearInput();
     }
 
