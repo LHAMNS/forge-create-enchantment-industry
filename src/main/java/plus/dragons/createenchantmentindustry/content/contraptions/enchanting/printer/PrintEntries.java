@@ -96,7 +96,7 @@ public class PrintEntries {
 
         @Override
         public Fluid requiredInkType(ItemStack target) {
-            return EnchantmentHelper.getEnchantments(target)
+            return Enchanting.getAllEnchantments(target)
                     .entrySet()
                     .stream()
                     .map(entry -> entry.getValue()>EnchantmentLevelUtil.getMaxLevel(entry.getKey()))
@@ -120,7 +120,7 @@ public class PrintEntries {
                         "gui.goggles.too_expensive").component()
                 ).withStyle(ChatFormatting.RED));
             else{
-                var hyper = EnchantmentHelper.getEnchantments(target)
+                var hyper = Enchanting.getAllEnchantments(target)
                         .entrySet()
                         .stream()
                         .map(entry -> entry.getValue()>EnchantmentLevelUtil.getMaxLevel(entry.getKey()))
@@ -132,7 +132,7 @@ public class PrintEntries {
                                 CeiConfigs.SERVER.copyEnchantedBookCostCoefficient.get())))).component()
                 ).withStyle(hyper? ChatFormatting.AQUA: ChatFormatting.GREEN));
             }
-            var map = EnchantmentHelper.getEnchantments(target);
+            var map = Enchanting.getAllEnchantments(target);
             for (var e : map.entrySet()) {
                 Component name = e.getKey().getFullname(e.getValue());
                 tooltip.add(Component.literal("     ").append(name).withStyle(name.getStyle()));
@@ -142,7 +142,7 @@ public class PrintEntries {
         @Override
         public MutableComponent getDisplaySourceContent(ItemStack target) {
             var ret = LANG.itemName(target).text( " / ");
-            var map = EnchantmentHelper.getEnchantments(target);
+            var map = Enchanting.getAllEnchantments(target);
             for (var e : map.entrySet()) {
                 Component name = e.getKey().getFullname(e.getValue());
                 ret.add(name.copy()).text(" ");
@@ -151,7 +151,7 @@ public class PrintEntries {
         }
 
         public static int getExperienceFromItem(ItemStack itemStack) {
-            return EnchantmentHelper.getEnchantments(itemStack)
+            return Enchanting.getAllEnchantments(itemStack)
                     .entrySet()
                     .stream()
                     .map(entry -> Enchanting.getExperienceConsumption(entry.getKey(), entry.getValue()))

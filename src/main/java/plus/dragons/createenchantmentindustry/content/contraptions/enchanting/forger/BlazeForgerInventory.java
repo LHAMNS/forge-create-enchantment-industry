@@ -1,7 +1,5 @@
 package plus.dragons.createenchantmentindustry.content.contraptions.enchanting.forger;
 
-import net.minecraft.core.Registry;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -18,7 +16,6 @@ import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * Inventory for the Blaze Forger.

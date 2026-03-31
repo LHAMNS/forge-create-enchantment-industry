@@ -12,6 +12,7 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.ItemStackHandler;
 import net.minecraftforge.items.wrapper.RecipeWrapper;
+import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.Enchanting;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
 import plus.dragons.createenchantmentindustry.entry.CeiRecipeTypes;
 
@@ -60,7 +61,7 @@ public class Disenchanting {
     // stack always has count of 1.
     @Nullable
     public static Pair<FluidStack, ItemStack> disenchantResult(ItemStack itemStack, Level level) {
-        if (EnchantmentHelper.getEnchantments(itemStack).keySet().stream().anyMatch(enchantment -> !enchantment.isCurse())) {
+        if (Enchanting.getAllEnchantments(itemStack).keySet().stream().anyMatch(enchantment -> !enchantment.isCurse())) {
             var xp =
                     new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), getDisenchantExperience(itemStack));
             ItemStack result = disenchant(itemStack);
@@ -81,7 +82,7 @@ public class Disenchanting {
         ItemStack result = itemStack.copy();
         result.removeTagKey("Enchantments");
         result.removeTagKey("StoredEnchantments");
-        Map<Enchantment, Integer> curses = EnchantmentHelper.getEnchantments(itemStack)
+        Map<Enchantment, Integer> curses = Enchanting.getAllEnchantments(itemStack)
                 .entrySet()
                 .stream()
                 .filter(entry -> entry.getKey().isCurse())
@@ -103,7 +104,7 @@ public class Disenchanting {
     }
 
     private static int getDisenchantExperience(ItemStack itemStack) {
-        int xp = EnchantmentHelper.getEnchantments(itemStack)
+        int xp = Enchanting.getAllEnchantments(itemStack)
                 .entrySet().stream()
                 .filter(entry -> !entry.getKey().isCurse())
                 .map(entry -> entry.getKey().getMinCost(entry.getValue()))

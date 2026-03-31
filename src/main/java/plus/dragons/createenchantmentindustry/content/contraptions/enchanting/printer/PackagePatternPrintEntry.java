@@ -102,7 +102,7 @@ public class PackagePatternPrintEntry implements PrintEntry {
         return LANG.builder()
                 .add(LANG.itemName(target))
                 .text(" / ")
-                .add(Component.translatable("gui.goggles.printer.package_pattern"))
+                .add(LANG.translate("gui.goggles.printer.package_pattern").component())
                 .component();
     }
 }

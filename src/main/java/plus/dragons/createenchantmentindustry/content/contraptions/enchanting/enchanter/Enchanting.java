@@ -12,6 +12,8 @@ import plus.dragons.createenchantmentindustry.entry.CeiItems;
 import plus.dragons.createenchantmentindustry.entry.CeiTags;
 import plus.dragons.createenchantmentindustry.foundation.config.CeiConfigs;
 
+import net.minecraft.world.item.Items;
+
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,6 +28,22 @@ public class Enchanting {
             TagKey.create(Registries.ITEM, EnchantmentIndustry.genRL("unenchantable"));
     /** Thread-safe list of conditions. Mods may add to this during initialization. */
     public static final List<Predicate<ItemStack>> UNENCHANTABLE_CONDITIONS = new CopyOnWriteArrayList<>();
+
+    /**
+     * Retrieves enchantments from an ItemStack, correctly handling enchanted books.
+     * {@link EnchantmentHelper#getEnchantments(ItemStack)} reads the {@code "Enchantments"}
+     * NBT tag, but enchanted books store theirs under {@code "StoredEnchantments"}.
+     * This method checks the stored tag first for enchanted books and falls back to the
+     * standard tag if the stored map is empty (defensive against unusual NBT states).
+     */
+    public static Map<Enchantment, Integer> getAllEnchantments(ItemStack itemStack) {
+        if (itemStack.is(Items.ENCHANTED_BOOK)) {
+            Map<Enchantment, Integer> stored = EnchantmentHelper.deserializeEnchantments(
+                    itemStack.getOrCreateTag().getList("StoredEnchantments", 10));
+            if (!stored.isEmpty()) return stored;
+        }
+        return EnchantmentHelper.getEnchantments(itemStack);
+    }
 
     @Nullable
     public static EnchantmentEntry getTargetEnchantment(ItemStack itemStack, boolean hyper) {

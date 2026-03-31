@@ -121,7 +121,7 @@ public class EnchantingGuideMenu extends GhostItemMenu<ItemStack> {
 
         @Override
         public boolean mayPlace(ItemStack pStack) {
-            return pStack.is(Items.ENCHANTED_BOOK) && !EnchantmentHelper.getEnchantments(pStack).isEmpty();
+            return pStack.is(Items.ENCHANTED_BOOK) && !Enchanting.getAllEnchantments(pStack).isEmpty();
         }
 
         @Override
