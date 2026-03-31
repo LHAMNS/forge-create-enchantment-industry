@@ -107,7 +107,7 @@ public class Enchanting {
         }
 
         ItemStack toCheck = itemStack.copy();
-        Map<Enchantment, Integer> modified = EnchantmentHelper.getEnchantments(toCheck);
+        Map<Enchantment, Integer> modified = getAllEnchantments(toCheck);
 
         if (modified.containsKey(enchantment) && modified.get(enchantment) >= entry.getSecond()) {
             return null;
