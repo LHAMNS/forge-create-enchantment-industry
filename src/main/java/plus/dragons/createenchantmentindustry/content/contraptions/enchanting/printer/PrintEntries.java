@@ -318,6 +318,7 @@ public class PrintEntries {
 
         @Override
         public boolean match(ItemStack toPrint) {
+            if (!isEnabled()) return false;
             return toPrint.is(AllBlocks.CLIPBOARD.get().asItem());
         }
 

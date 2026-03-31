@@ -13,9 +13,11 @@ public class PrinterDisplaySource extends SingleLineDisplaySource {
             return EMPTY_LINE;
         if(printer.getCopyTarget().isEmpty()){
             return EnchantmentIndustry.LANG.translate("gui.goggles.printer.no_target").component();
-        } else {
-            return printer.printEntry.getDisplaySourceContent(printer.getCopyTarget());
         }
+        if (printer.printEntry == null) {
+            return EMPTY_LINE;
+        }
+        return printer.printEntry.getDisplaySourceContent(printer.getCopyTarget());
     }
 
     @Override

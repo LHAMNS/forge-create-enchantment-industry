@@ -150,9 +150,9 @@ public class DisenchanterRenderer extends SmartBlockEntityRenderer<DisenchanterB
         itemPosition = itemPosition.add(Vec3.atLowerCornerOf(insertedFrom.getOpposite().getNormal()).scale(.5f - offset));
         if (horizontal) {
             boolean alongX = insertedFrom.getClockWise().getAxis() == Direction.Axis.X;
-            itemPosition.add(alongX ? sideOffset : 0, 0.005, alongX ? 0 : -sideOffset);
+            itemPosition = itemPosition.add(alongX ? sideOffset : 0, 0.005, alongX ? 0 : -sideOffset);
         } else {
-            itemPosition.add(0, 0.005, 0);
+            itemPosition = itemPosition.add(0, 0.005, 0);
         }
         AABB bb = new AABB(itemPosition.add(0, 13 / 16d, 0), itemPosition.add(0, 1 / 4d, 0)).inflate(radius / 32f);
         ForgeCatnipServices.FLUID_RENDERER.renderFluidBox(xp,

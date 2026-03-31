@@ -222,27 +222,33 @@ public class DisenchanterBlockEntity extends SmartBlockEntity implements IHaveGo
                 });
                 if (sum.get() != 0) {
                     var fluidStack = new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), sum.get());
-                    var inserted = internalTank.getPrimaryHandler().fill(fluidStack, IFluidHandler.FluidAction.EXECUTE);
-                    if (inserted != 0) {
+                    var canInsert = internalTank.getPrimaryHandler().fill(fluidStack, IFluidHandler.FluidAction.SIMULATE);
+                    if (canInsert != 0) {
+                        int remaining = canInsert;
+                        int actualDrained = 0;
                         for (var player : players) {
                             var total = getPlayerExperience(player);
-                            if (inserted >= ABSORB_AMOUNT) {
+                            if (remaining >= ABSORB_AMOUNT) {
                                 if (total >= ABSORB_AMOUNT) {
                                     player.giveExperiencePoints(-ABSORB_AMOUNT);
-                                    inserted -= ABSORB_AMOUNT;
+                                    remaining -= ABSORB_AMOUNT;
+                                    actualDrained += ABSORB_AMOUNT;
                                 } else if (total != 0) {
-                                    inserted -= total;
+                                    remaining -= total;
+                                    actualDrained += total;
                                     player.giveExperiencePoints(-total);
                                 }
                                 absorbedXp = true;
                                 if (player instanceof ServerPlayer serverPlayer)
                                     CeiAdvancements.SPIRIT_TAKING.getTrigger().trigger(serverPlayer);
-                            } else if (inserted > 0) {
-                                if (total >= inserted) {
-                                    player.giveExperiencePoints(-inserted);
-                                    inserted = 0;
+                            } else if (remaining > 0) {
+                                if (total >= remaining) {
+                                    player.giveExperiencePoints(-remaining);
+                                    actualDrained += remaining;
+                                    remaining = 0;
                                 } else {
-                                    inserted -= total;
+                                    remaining -= total;
+                                    actualDrained += total;
                                     player.giveExperiencePoints(-total);
                                 }
                                 absorbedXp = true;
@@ -251,6 +257,10 @@ public class DisenchanterBlockEntity extends SmartBlockEntity implements IHaveGo
                             } else {
                                 break;
                             }
+                        }
+                        if (actualDrained > 0) {
+                            var drainedFluid = new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), actualDrained);
+                            internalTank.getPrimaryHandler().fill(drainedFluid, IFluidHandler.FluidAction.EXECUTE);
                         }
                     }
                 }
