@@ -123,7 +123,7 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     protected static int ENCHANT_PARTICLE_COUNT = 20;
 
     protected void spawnParticles() {
-        if (isVirtual())
+        if (level == null || isVirtual())
             return;
         Vec3 vec = VecHelper.getCenterOf(worldPosition);
         vec = vec.subtract(0, 11 / 16f, 0);

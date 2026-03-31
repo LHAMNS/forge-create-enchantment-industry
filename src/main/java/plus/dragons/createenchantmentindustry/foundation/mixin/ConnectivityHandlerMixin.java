@@ -10,6 +10,7 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraftforge.fluids.FluidStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Coerce;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceHelper;
@@ -25,10 +26,16 @@ public class ConnectivityHandlerMixin {
     /**
      * Hook into the single-block early return (width==1 && height==1).
      * When a single-tank block is removed while containing experience fluid, drop it as XP.
+     *
+     * ordinal=2 targets the third RETURN in splitMultiAndInvalidate:
+     *   ordinal 0: level == null guard
+     *   ordinal 1: be == null after getControllerBE()
+     *   ordinal 2: width == 1 && height == 1  <-- this one (single-block early exit)
+     * Keep in sync if Create reorders or adds returns before this point.
      */
     @Inject(method = "splitMultiAndInvalidate", at = @At(value = "RETURN", ordinal = 2))
     private static <T extends BlockEntity & IMultiBlockEntityContainer> void cei$splitMulti$dropExperienceFluidSingle(
-            T be, Object cache, boolean tryReconnect, CallbackInfo ci) {
+            T be, @Coerce Object cache, boolean tryReconnect, CallbackInfo ci) {
         if (!(be.getLevel() instanceof ServerLevel level && be.isRemoved()))
             return;
         if (!(be instanceof IMultiBlockEntityContainer.Fluid fluidContainer))
@@ -45,7 +52,7 @@ public class ConnectivityHandlerMixin {
      */
     @Inject(method = "splitMultiAndInvalidate", at = @At("TAIL"))
     private static <T extends BlockEntity & IMultiBlockEntityContainer> void cei$splitMulti$dropExperienceFluidMulti(
-            T be, Object cache, boolean tryReconnect, CallbackInfo ci, @Local FluidStack toDistribute) {
+            T be, @Coerce Object cache, boolean tryReconnect, CallbackInfo ci, @Local(ordinal = 0) FluidStack toDistribute) {
         if (!(be.getLevel() instanceof ServerLevel level))
             return;
         if (!(be instanceof IMultiBlockEntityContainer.Fluid fluidContainer))

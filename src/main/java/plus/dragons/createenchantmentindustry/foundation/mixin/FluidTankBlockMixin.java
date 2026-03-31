@@ -5,7 +5,6 @@ import com.simibubi.create.content.equipment.wrench.IWrenchable;
 import com.simibubi.create.content.fluids.tank.CreativeFluidTankBlockEntity;
 import com.simibubi.create.content.fluids.tank.FluidTankBlock;
 import com.simibubi.create.content.fluids.tank.FluidTankBlockEntity;
-import com.simibubi.create.content.processing.basin.BasinBlockEntity;
 import com.simibubi.create.foundation.block.IBE;
 import net.createmod.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
@@ -22,7 +21,7 @@ import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experi
 import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 
 @Mixin(FluidTankBlock.class)
-public abstract class FluidTankBlockMixin extends Block implements IBE<BasinBlockEntity>, IWrenchable {
+public abstract class FluidTankBlockMixin extends Block implements IBE<FluidTankBlockEntity>, IWrenchable {
     public FluidTankBlockMixin(Properties pProperties) {
         super(pProperties);
     }

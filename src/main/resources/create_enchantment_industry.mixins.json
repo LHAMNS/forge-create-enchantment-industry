@@ -6,13 +6,11 @@
   "refmap": "create_enchantment_industry.refmap.json",
   "mixins": [
     "AbstractFurnaceBlockEntityMixin",
-    "BasinBlockEntityMixin",
     "ConnectivityHandlerMixin",
     "CreateNBTProcessorsMixin",
     "CrushingWheelControllerBlockEntityMixin",
     "DeployerFakePlayerMixin",
     "FillingBySpoutMixin",
-    "FluidTankBlockMixin",
     "ItemDrainBlockEntityAccessor",
     "ItemDrainBlockMixin",
     "PlayerMixin",
