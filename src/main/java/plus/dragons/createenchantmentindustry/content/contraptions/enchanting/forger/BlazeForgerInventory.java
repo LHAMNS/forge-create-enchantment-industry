@@ -168,7 +168,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
                 }
             } else if (EnchantingTemplateItem.hasStoredEnchantments(base)) {
                 // Template with enchantments + non-template item -> apply template to item
-                Map<Enchantment, Integer> additionEnchantments = EnchantmentHelper.getEnchantments(addition);
+                Map<Enchantment, Integer> additionEnchantments = Enchanting.getAllEnchantments(addition);
                 if (applyEnchantments(addition, additionEnchantments, baseEnchantments)) {
                     stacks.set(4, addition);
                     stacks.set(5, ItemStack.EMPTY);
@@ -190,7 +190,7 @@ public class BlazeForgerInventory extends ItemStackHandler {
             if (EnchantingTemplateItem.hasStoredEnchantments(addition)) {
                 // Non-template base + template with enchantments -> apply template to base
                 Map<Enchantment, Integer> templateEnchantments = EnchantingTemplateItem.getStoredEnchantments(addition);
-                Map<Enchantment, Integer> baseEnchantments = EnchantmentHelper.getEnchantments(base);
+                Map<Enchantment, Integer> baseEnchantments = Enchanting.getAllEnchantments(base);
                 if (applyEnchantments(base, baseEnchantments, templateEnchantments)) {
                     stacks.set(5, ItemStack.EMPTY);
                     mode = 1;

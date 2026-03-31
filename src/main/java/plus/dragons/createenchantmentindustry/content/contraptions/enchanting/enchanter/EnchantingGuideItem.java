@@ -148,7 +148,7 @@ public class EnchantingGuideItem extends Item implements MenuProvider {
     }
 
     public static List<Map.Entry<net.minecraft.world.item.enchantment.Enchantment, Integer>> getSortedEnchantments(ItemStack book) {
-        return EnchantmentHelper.getEnchantments(book)
+        return Enchanting.getAllEnchantments(book)
                 .entrySet()
                 .stream()
                 .sorted(Comparator

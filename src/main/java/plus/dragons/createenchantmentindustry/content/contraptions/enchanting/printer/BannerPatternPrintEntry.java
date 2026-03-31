@@ -137,7 +137,7 @@ public class BannerPatternPrintEntry implements PrintEntry {
         return LANG.builder()
                 .add(LANG.itemName(target))
                 .text(" / ")
-                .add(Component.translatable("gui.goggles.printer.banner_pattern"))
+                .add(LANG.translate("gui.goggles.printer.banner_pattern").component())
                 .component();
     }
 

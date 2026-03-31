@@ -11,6 +11,7 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.GrindstoneEvent;
 import net.minecraftforge.items.wrapper.RecipeWrapper;
+import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.Enchanting;
 import plus.dragons.createenchantmentindustry.entry.CeiRecipeTypes;
 
 import java.util.Map;
@@ -64,7 +65,7 @@ public class GrindstoneHelper {
 
     public static int getExperienceFromItem(ItemStack stack) {
         int result = 0;
-        Map<Enchantment, Integer> enchantments = EnchantmentHelper.getEnchantments(stack);
+        Map<Enchantment, Integer> enchantments = Enchanting.getAllEnchantments(stack);
         for (Map.Entry<Enchantment, Integer> entry : enchantments.entrySet()) {
             Enchantment enchantment = entry.getKey();
             int level = entry.getValue();
