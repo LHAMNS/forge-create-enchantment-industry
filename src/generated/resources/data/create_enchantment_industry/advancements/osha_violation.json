@@ -1,25 +1,25 @@
 {
-  "parent": "create_enchantment_industry:spiritual_return",
+  "parent": "create_enchantment_industry:lightning_catalysis",
   "criteria": {
     "builtin": {
       "conditions": {},
-      "trigger": "create_enchantment_industry:builtin/a_shower_experience"
+      "trigger": "create_enchantment_industry:builtin/osha_violation"
     }
   },
   "display": {
     "announce_to_chat": true,
     "description": {
       "color": "#DBA213",
-      "translate": "advancement.create_enchantment_industry.a_shower_experience.desc"
+      "translate": "advancement.create_enchantment_industry.osha_violation.desc"
     },
     "frame": "goal",
     "hidden": false,
     "icon": {
-      "item": "create:fluid_pipe"
+      "item": "minecraft:barrier"
     },
     "show_toast": true,
     "title": {
-      "translate": "advancement.create_enchantment_industry.a_shower_experience"
+      "translate": "advancement.create_enchantment_industry.osha_violation"
     }
   },
   "requirements": [

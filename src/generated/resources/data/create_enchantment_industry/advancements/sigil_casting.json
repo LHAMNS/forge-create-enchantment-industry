@@ -1,0 +1,31 @@
+{
+  "parent": "create_enchantment_industry:blazing_fusion",
+  "criteria": {
+    "builtin": {
+      "conditions": {},
+      "trigger": "create_enchantment_industry:builtin/sigil_casting"
+    }
+  },
+  "display": {
+    "announce_to_chat": false,
+    "description": {
+      "color": "#DBA213",
+      "translate": "advancement.create_enchantment_industry.sigil_casting.desc"
+    },
+    "frame": "task",
+    "hidden": false,
+    "icon": {
+      "item": "create_enchantment_industry:enchanting_guide"
+    },
+    "show_toast": true,
+    "title": {
+      "translate": "advancement.create_enchantment_industry.sigil_casting"
+    }
+  },
+  "requirements": [
+    [
+      "builtin"
+    ]
+  ],
+  "sends_telemetry_event": true
+}
