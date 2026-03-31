@@ -91,6 +91,6 @@ public class DeployerExtension {
         }
         // Cancel the event so the deployer doesn't accumulate totalExperience
         // Only pass through leftover XP that wasn't converted to nuggets
-        event.setAmount(remaining - nuggets * 3);
+        event.setAmount(0);
     }
 }

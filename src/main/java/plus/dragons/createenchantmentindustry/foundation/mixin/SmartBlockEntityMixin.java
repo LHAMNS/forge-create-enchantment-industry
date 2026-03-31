@@ -3,6 +3,7 @@ package plus.dragons.createenchantmentindustry.foundation.mixin;
 import com.simibubi.create.foundation.blockEntity.SmartBlockEntity;
 import com.simibubi.create.foundation.blockEntity.behaviour.BlockEntityBehaviour;
 import com.simibubi.create.foundation.blockEntity.behaviour.fluid.SmartFluidTankBehaviour;
+import net.createmod.catnip.math.VecHelper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -36,17 +37,13 @@ public abstract class SmartBlockEntityMixin extends BlockEntity {
     private void destroy$dropExperienceFluid(CallbackInfo ci) {
         if (!(this.level instanceof ServerLevel serverLevel))
             return;
-        var state = this.getBlockState();
         for (var behaviour : this.getAllBehaviours()) {
             if (behaviour instanceof SmartFluidTankBehaviour tank) {
                 tank.getCapability().ifPresent(handler -> {
                     int numTanks = handler.getTanks();
                     for (int t = 0; t < numTanks; t++) {
                         var fluid = handler.getFluidInTank(t);
-                        int experience = ExperienceHelper.getExperienceFromFluid(fluid);
-                        if (experience > 0) {
-                            state.getBlock().popExperience(serverLevel, this.worldPosition, experience);
-                        }
+                        ExperienceHelper.dropExperienceFluid(serverLevel, VecHelper.getCenterOf(this.worldPosition), fluid);
                     }
                 });
             }
