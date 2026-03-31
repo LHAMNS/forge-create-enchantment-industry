@@ -104,7 +104,8 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
             this.copyTarget = copyTarget.copy();
             this.copyTarget.setCount(1);
             matchPrintEntry(this.copyTarget);
-            tooExpensive = Printing.isTooExpensive(printEntry, this.copyTarget, CeiConfigs.SERVER.copierTankCapacity.get());
+            tooExpensive = printEntry != null && this.copyTarget != null
+                    && Printing.isTooExpensive(printEntry, this.copyTarget, CeiConfigs.SERVER.copierTankCapacity.get());
         }
         processingTicks = -1;
         notifyUpdate();
