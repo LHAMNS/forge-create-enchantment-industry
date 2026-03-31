@@ -7,6 +7,7 @@ import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.di
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.BlazeEnchanterBlockEntity;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.BlazeEnchanterRenderer;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.forger.BlazeForgerBlockEntity;
+import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.forger.BlazeForgerRenderer;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.grindstone.GrindstoneDrainBlockEntity;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.grindstone.GrindstoneDrainRenderer;
 import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.printer.PrinterBlockEntity;
@@ -39,6 +40,7 @@ public class CeiBlockEntities {
     public static final BlockEntityEntry<BlazeForgerBlockEntity> BLAZE_FORGER = REGISTRATE
             .blockEntity("blaze_forger", BlazeForgerBlockEntity::new)
             .validBlocks(CeiBlocks.BLAZE_FORGER)
+            .renderer(() -> BlazeForgerRenderer::new)
             .register();
 
     public static final BlockEntityEntry<KineticBlockEntity> MECHANICAL_GRINDSTONE = REGISTRATE

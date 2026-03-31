@@ -187,6 +187,10 @@
 	"create_enchantment_industry.gui.goggles.hyper_xp_consumption": "消耗超级经验：%s mB",
 	"create_enchantment_industry.gui.goggles.ink_consumption": "消耗墨水：%s mB",
 	"create_enchantment_industry.gui.goggles.too_expensive": "过于昂贵！",
+	"create_enchantment_industry.gui.goggles.printer.banner_pattern": "旗帜图案：",
+	"create_enchantment_industry.gui.blaze_enchanter.template.invalid": "该物品不能用作模板",
+	"create_enchantment_industry.gui.printer.banner_pattern.multiple_pattern": "多个图案——无法打印",
+	"create_enchantment_industry.gui.printer.banner_pattern.no_pattern": "无可打印的图案",
 
 	"create_enchantment_industry.gui.goggles.enchanting.completed": "附魔完成！",
 	"create_enchantment_industry.gui.goggles.enchanting.cost": "附魔消耗：%1$s",
@@ -213,6 +217,9 @@
 	"recipe.create_enchantment_industry.disenchanting": "祛魔",
 	"create_enchantment_industry.recipe.grinding": "研磨",
 	"create_enchantment_industry.recipe.printing": "打印",
+	"create_enchantment_industry.recipe.assembly.grinding": "研磨",
+	"create_enchantment_industry.recipe.assembly.grinding.needs_fluid": "需要流体",
+	"create_enchantment_industry.recipe.assembly.printing": "打印",
 
 	"create_enchantment_industry.display_source.blaze_enchanter_source_target_enchantment": "目标附魔",
 	"create_enchantment_industry.display_source.printer_source_copy_content": "复印内容",

@@ -182,6 +182,10 @@
 	"create_enchantment_industry.gui.goggles.hyper_xp_consumption": "Consumes Hyper Experience: %s mB",
 	"create_enchantment_industry.gui.goggles.ink_consumption": "Consumes Ink: %s mB",
 	"create_enchantment_industry.gui.goggles.too_expensive": "Too Expensive!",
+	"create_enchantment_industry.gui.goggles.printer.banner_pattern": "Banner Pattern:",
+	"create_enchantment_industry.gui.blaze_enchanter.template.invalid": "Item cannot be used as template",
+	"create_enchantment_industry.gui.printer.banner_pattern.multiple_pattern": "Multiple patterns - cannot print",
+	"create_enchantment_industry.gui.printer.banner_pattern.no_pattern": "No pattern to print",
 
 	"create_enchantment_industry.generic.unit.page": "Page",
 	"create_enchantment_industry.generic.unit.pages": "Pages",
@@ -189,6 +193,9 @@
 	"recipe.create_enchantment_industry.disenchanting": "Disenchanting",
 	"create_enchantment_industry.recipe.grinding": "Grinding",
 	"create_enchantment_industry.recipe.printing": "Printing",
+	"create_enchantment_industry.recipe.assembly.grinding": "Grinding",
+	"create_enchantment_industry.recipe.assembly.grinding.needs_fluid": "Requires Fluid",
+	"create_enchantment_industry.recipe.assembly.printing": "Printing",
 
 	"create_enchantment_industry.display_source.blaze_enchanter_source_target_enchantment": "Target Enchantment",
 	"create_enchantment_industry.display_source.printer_source_copy_content": "Copy Content",
