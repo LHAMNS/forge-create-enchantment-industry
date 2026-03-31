@@ -51,8 +51,6 @@ import net.minecraftforge.fluids.FluidStack;
 import net.minecraftforge.fluids.capability.IFluidHandler;
 import net.minecraftforge.items.ItemHandlerHelper;
 import javax.annotation.Nonnull;
-import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.behaviour.EnchantingBehaviour;
-import plus.dragons.createenchantmentindustry.content.contraptions.enchanting.enchanter.behaviour.TemplateEnchantingBehaviour;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.FilteringFluidTankBehaviour;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceFluid;
 import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
@@ -77,10 +75,6 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     SmartFluidTankBehaviour internalTank;
     TransportedItemStack heldItem;
     ItemStack targetItem = new ItemStack(CeiItems.ENCHANTING_GUIDE.get());
-    /** Template item placed on the enchanter for template-based enchanting. Empty = use EnchantingGuide mode. */
-    ItemStack templateItem = ItemStack.EMPTY;
-    /** Current enchanting behaviour - switches between guide-based and template-based. */
-    EnchantingBehaviour enchantingBehaviour = new EnchantingBehaviour();
     int processingTicks;
     /** Whether this enchanter is in "cursed" mode (hyper mode with lightning rod deflecting lightning). */
     protected boolean cursed;
@@ -92,8 +86,6 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     protected long enchantmentSeed;
     /** Snapshotted cost coefficient at processing start, to prevent mid-processing config changes. */
     protected float snapshotCostCoefficient = 1.0f;
-    /** ScrollValue-based enchant level (0 = not set, 1-maxLevel). Equivalent to upstream's EnchanterBehaviour value. */
-    protected int enchantLevel;
     /** The EnchanterBehaviour (ScrollValueBehaviour) for scroll-wheel enchant level selection. */
     protected EnchanterBehaviour enchanterBehaviour;
     Map<Direction, LazyOptional<EnchantingItemHandler>> itemHandlers;
@@ -173,9 +165,6 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
                         (blockState, direction) -> direction.getAxis().isHorizontal()),
                 new EnchanterTemplateItemTransform());
         enchanterBehaviour.between(0, getMaxEnchantLevel());
-        enchanterBehaviour.withCallback(i -> {
-            this.enchantLevel = i;
-        });
         behaviours.add(enchanterBehaviour);
         registerAwardables(behaviours,
                 CeiAdvancements.FIRST_ORDER.asCreateAdvancement(),
@@ -314,8 +303,8 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         if (heldItem.prevBeltPosition < .5f && heldItem.beltPosition >= .5f) {
             // Use behaviour-based check if template is set, otherwise fall back to guide-based check
             boolean canProcess;
-            if (!templateItem.isEmpty()) {
-                canProcess = enchantingBehaviour.canProcess(heldItem.stack, targetItem, hyper());
+            if (enchanterBehaviour.isUsingTemplateMode()) {
+                canProcess = enchanterBehaviour.canProcess(heldItem.stack);
             } else {
                 canProcess = Enchanting.getValidEnchantment(heldItem.stack, targetItem, hyper()) != null;
             }
@@ -444,11 +433,11 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         boolean hyper = hyper();
 
         // Template-based enchanting path
-        if (!templateItem.isEmpty()) {
-            if (!enchantingBehaviour.canProcess(heldItem.stack, targetItem, hyper))
+        if (enchanterBehaviour.isUsingTemplateMode()) {
+            if (!enchanterBehaviour.canProcess(heldItem.stack))
                 return false;
 
-            int cost = (int) (enchantingBehaviour.getExperienceCost(targetItem, hyper) * snapshotCostCoefficient);
+            int cost = (int) (enchanterBehaviour.getExperienceCost() * snapshotCostCoefficient);
             FluidStack exp = new FluidStack(hyper
                     ? CeiFluids.HYPER_EXPERIENCE.get().getSource()
                     : CeiFluids.EXPERIENCE.get().getSource(), cost);
@@ -483,10 +472,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
                 }
             }
             // Process finished - apply template enchanting
-            if (enchantingBehaviour instanceof TemplateEnchantingBehaviour templateBehaviour)
-                templateBehaviour.applyEnchantment(heldItem.stack, targetItem, hyper, new Random(enchantmentSeed));
-            else
-                enchantingBehaviour.applyEnchantment(heldItem.stack, targetItem, hyper);
+            enchanterBehaviour.applyEnchantmentWithRandom(heldItem.stack, new Random(enchantmentSeed));
             // In cursed mode, also apply a random curse enchantment
             if (cursed) {
                 Enchanting.applyCurseEnchantment(heldItem.stack, random);
@@ -494,11 +480,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
             consumeExperience(cost, hyper);
             advanceEnchantmentSeed();
             // Consume the template item to prevent infinite reuse (item duplication)
-            templateItem.shrink(1);
-            if (templateItem.isEmpty()) {
-                templateItem = ItemStack.EMPTY;
-                enchantingBehaviour = new EnchantingBehaviour();
-            }
+            enchanterBehaviour.consumeTemplate();
             sendParticles = true;
             notifyUpdate();
             return true;
@@ -580,45 +562,31 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
      * Get the template item currently placed on the enchanter.
      */
     public ItemStack getTemplateItem() {
-        return templateItem;
+        return enchanterBehaviour.getTemplate();
     }
 
     /**
      * Set the template item on the enchanter.
-     * If the item is enchantable, switches to TemplateEnchantingBehaviour.
-     * If empty, switches back to default EnchantingBehaviour.
+     * Delegates to EnchanterBehaviour which owns the template state.
      * @return true if the template was accepted
      */
     public boolean setTemplateItem(ItemStack stack) {
-        if (stack.isEmpty()) {
-            templateItem = ItemStack.EMPTY;
-            enchantingBehaviour = new EnchantingBehaviour();
-        } else if (stack.isEnchantable()) {
-            templateItem = stack;
-            enchantingBehaviour = new TemplateEnchantingBehaviour(templateItem);
-        } else {
-            return false;
-        }
-        setChanged();
-        sendData();
-        return true;
+        return enchanterBehaviour.setTemplate(stack);
     }
 
     /**
      * Check if the current enchanting behaviour can process the given item.
      */
     public boolean canProcessWithBehaviour(ItemStack stack) {
-        return enchantingBehaviour.canProcess(stack, targetItem, hyper());
+        return enchanterBehaviour.canProcess(stack);
     }
 
     public boolean isUsingTemplateMode() {
-        return !templateItem.isEmpty() && enchantingBehaviour instanceof TemplateEnchantingBehaviour;
+        return enchanterBehaviour.isUsingTemplateMode();
     }
 
     public int getTemplateEnchantmentCount() {
-        if (enchantingBehaviour instanceof TemplateEnchantingBehaviour templateBehaviour)
-            return templateBehaviour.getAvailableEnchantmentCount(hyper());
-        return 0;
+        return enchanterBehaviour.getTemplateEnchantmentCount(hyper());
     }
 
     private boolean hasRequiredTankFluid(int amount, boolean hyper) {
@@ -634,14 +602,14 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
      * Apply enchantment using the current behaviour.
      */
     public void applyEnchantmentWithBehaviour(ItemStack stack) {
-        enchantingBehaviour.applyEnchantment(stack, targetItem, hyper());
+        enchanterBehaviour.applyEnchantment(stack);
     }
 
     /**
      * Get experience cost using the current behaviour.
      */
     public int getExperienceCostFromBehaviour() {
-        return enchantingBehaviour.getExperienceCost(targetItem, hyper());
+        return enchanterBehaviour.getExperienceCost();
     }
 
     private ItemStack tryInsertingFromSide(TransportedItemStack transportedStack, Direction side, boolean simulate) {
@@ -653,8 +621,8 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
 
         // Check if item can be processed - support both template mode and guide mode
         boolean canProcess;
-        if (!templateItem.isEmpty()) {
-            canProcess = enchantingBehaviour.canProcess(inserted, targetItem, hyper());
+        if (enchanterBehaviour.isUsingTemplateMode()) {
+            canProcess = enchanterBehaviour.canProcess(inserted);
         } else {
             canProcess = Enchanting.getValidEnchantment(inserted, targetItem, hyper()) != null;
         }
@@ -720,8 +688,11 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
             if (!heldItemStack.isEmpty())
                 Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), heldItemStack);
             Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), targetItem);
-            if (!templateItem.isEmpty())
-                Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), templateItem);
+            ItemStack template = enchanterBehaviour.getTemplate();
+            if (!template.isEmpty()) {
+                Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), template);
+                enchanterBehaviour.setTemplate(ItemStack.EMPTY);
+            }
         }
     }
 
@@ -795,10 +766,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         compoundTag.putInt("SuperExperience", superExperience);
         compoundTag.putBoolean("IsCreative", isCreative);
         compoundTag.putLong("EnchantmentSeed", enchantmentSeed);
-        compoundTag.putInt("EnchantLevel", enchantLevel);
         compoundTag.putFloat("SnapshotCostCoeff", snapshotCostCoefficient);
-        if (!templateItem.isEmpty())
-            compoundTag.put("TemplateItem", templateItem.serializeNBT());
         if (heldItem != null)
             compoundTag.put("HeldItem", heldItem.serializeNBT());
         if (sendParticles && clientPacket) {
@@ -815,8 +783,6 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         // EnchantmentSeed, EnchantLevel, SnapshotCostCoeff, HeldItem) is excluded.
         tag.put("TargetItem", targetItem.serializeNBT());
         tag.putBoolean("Goggles", goggles);
-        if (!templateItem.isEmpty())
-            tag.put("TemplateItem", templateItem.serializeNBT());
     }
 
     @Override
@@ -829,20 +795,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         superExperience = compoundTag.getInt("SuperExperience");
         isCreative = compoundTag.getBoolean("IsCreative");
         enchantmentSeed = compoundTag.contains("EnchantmentSeed") ? compoundTag.getLong("EnchantmentSeed") : worldPosition.asLong();
-        enchantLevel = compoundTag.getInt("EnchantLevel");
         snapshotCostCoefficient = compoundTag.contains("SnapshotCostCoeff") ? compoundTag.getFloat("SnapshotCostCoeff") : 1.0f;
-        if (compoundTag.contains("TemplateItem")) {
-            templateItem = ItemStack.of(compoundTag.getCompound("TemplateItem"));
-            if (!templateItem.isEmpty() && templateItem.isEnchantable()) {
-                enchantingBehaviour = new TemplateEnchantingBehaviour(templateItem);
-            } else {
-                templateItem = ItemStack.EMPTY;
-                enchantingBehaviour = new EnchantingBehaviour();
-            }
-        } else {
-            templateItem = ItemStack.EMPTY;
-            enchantingBehaviour = new EnchantingBehaviour();
-        }
         if (compoundTag.contains("HeldItem"))
             heldItem = TransportedItemStack.read(compoundTag.getCompound("HeldItem"));
         if (!clientPacket)
@@ -868,34 +821,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         LANG.translate("gui.goggles.blaze_enchanter").forGoggles(tooltip);
-        if (isUsingTemplateMode()) {
-            LANG.translate("gui.goggles.enchanting.template").forGoggles(tooltip);
-            tooltip.add(Component.literal("     ")
-                    .append(templateItem.getHoverName())
-                    .withStyle(ChatFormatting.GRAY));
-            int availableCount = getTemplateEnchantmentCount();
-            if (availableCount > 0) {
-                tooltip.add(Component.literal("     " + availableCount + " enchantment"
-                                + (availableCount == 1 ? "" : "s") + " available")
-                        .withStyle(ChatFormatting.GRAY));
-            }
-            int consumption = (int) (getExperienceCostFromBehaviour() *
-                    (hyper() ? CeiConfigs.SERVER.hyperEnchantByBlazeEnchanterCostCoefficient.get()
-                            : CeiConfigs.SERVER.enchantByBlazeEnchanterCostCoefficient.get()));
-            if (consumption > 0) {
-                if (consumption > CeiConfigs.SERVER.blazeEnchanterTankCapacity.get())
-                    tooltip.add(Component.literal("     ").append(LANG.translate("gui.goggles.too_expensive")
-                                    .component())
-                            .withStyle(ChatFormatting.RED));
-                else
-                    tooltip.add(Component.literal("     ")
-                            .append(LANG.translate(hyper()
-                                            ? "gui.goggles.hyper_xp_consumption"
-                                            : "gui.goggles.xp_consumption",
-                                    consumption).component())
-                            .withStyle(hyper() ? ChatFormatting.AQUA : ChatFormatting.GREEN));
-            }
-        } else if (targetItem != null && targetItem.is(CeiItems.ENCHANTING_GUIDE.get())) {
+        if (targetItem != null && targetItem.is(CeiItems.ENCHANTING_GUIDE.get())) {
             EnchantmentEntry entry = Enchanting.getTargetEnchantment(targetItem, hyper());
             if (entry != null) {
                 tooltip.add(Component.literal("     ")

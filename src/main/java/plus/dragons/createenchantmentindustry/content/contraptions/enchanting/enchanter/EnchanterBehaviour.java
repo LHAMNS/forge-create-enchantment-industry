@@ -64,22 +64,35 @@ public class EnchanterBehaviour extends ScrollValueBehaviour implements IHaveGog
         return enchanting.canProcess(stack, enchanter.targetItem, enchanter.hyper());
     }
 
-    public void update(ItemStack stack) {
-        // Update the enchanting behaviour state based on current value and enchanter state
+    public boolean isUsingTemplateMode() {
+        return !template.isEmpty() && enchanting instanceof TemplateEnchantingBehaviour;
     }
 
-    public ItemStack getResult(ItemStack stack) {
-        // Template-based path
-        if (!template.isEmpty() && enchanting instanceof TemplateEnchantingBehaviour) {
+    public int getTemplateEnchantmentCount(boolean hyper) {
+        if (enchanting instanceof TemplateEnchantingBehaviour t)
+            return t.getAvailableEnchantmentCount(hyper);
+        return 0;
+    }
+
+    public void applyEnchantment(ItemStack stack) {
+        enchanting.applyEnchantment(stack, enchanter.targetItem, enchanter.hyper());
+    }
+
+    public void applyEnchantmentWithRandom(ItemStack stack, java.util.Random random) {
+        if (enchanting instanceof TemplateEnchantingBehaviour t)
+            t.applyEnchantment(stack, enchanter.targetItem, enchanter.hyper(), random);
+        else
             enchanting.applyEnchantment(stack, enchanter.targetItem, enchanter.hyper());
-            return stack;
+    }
+
+    public void consumeTemplate() {
+        template.shrink(1);
+        if (template.isEmpty()) {
+            template = ItemStack.EMPTY;
+            enchanting = new EnchantingBehaviour();
         }
-        // Guide-based path
-        var entry = Enchanting.getValidEnchantment(stack, enchanter.targetItem, enchanter.hyper());
-        if (entry != null) {
-            Enchanting.enchantItem(stack, entry);
-        }
-        return stack;
+        blockEntity.setChanged();
+        blockEntity.sendData();
     }
 
     public int getExperienceCost() {
@@ -111,7 +124,6 @@ public class EnchanterBehaviour extends ScrollValueBehaviour implements IHaveGog
         if (value == this.value)
             return;
         this.value = value;
-        update(enchanter.getHeldItemStack());
         blockEntity.setChanged();
         blockEntity.sendData();
     }
@@ -171,6 +183,10 @@ public class EnchanterBehaviour extends ScrollValueBehaviour implements IHaveGog
     public void read(CompoundTag nbt, boolean clientPacket) {
         value = Math.min(Math.max(nbt.getInt(LEVEL), 0), enchanter.getMaxEnchantLevel());
         template = ItemStack.of(nbt.getCompound(TEMPLATE));
+        // Backward compatibility: read from old BE-owned key if behaviour key is absent
+        if (template.isEmpty() && nbt.contains("TemplateItem")) {
+            template = ItemStack.of(nbt.getCompound("TemplateItem"));
+        }
         var level = getWorld();
         if (level != null)
             setTemplate(template);

@@ -43,7 +43,7 @@ public class EnchantingItemHandler implements IItemHandler {
         ItemStack returned = ItemStack.EMPTY;
 
         boolean canProcess = false;
-        if (be.enchantingBehaviour != null && be.enchantingBehaviour.canProcess(stack, be.targetItem, be.hyper()))
+        if (be.enchanterBehaviour != null && be.enchanterBehaviour.canProcess(stack))
             canProcess = true;
         else if (Enchanting.getValidEnchantment(stack, be.targetItem, be.hyper()) != null)
             canProcess = true;
