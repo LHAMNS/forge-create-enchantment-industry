@@ -34,10 +34,11 @@ public class AccumulativeTrigger extends SimpleCriterionTrigger<AccumulativeTrig
     }
 
     public void trigger(Player pPlayer, int change){
+        if (!(pPlayer instanceof ServerPlayer serverPlayer)) return;
         // Accumulate progress once, then check all trigger instances without side effects
         AccumulativeData data = get(pPlayer.level());
         data.change(id, pPlayer.getUUID(), change);
-        this.trigger((ServerPlayer) pPlayer, (triggerInstance) -> triggerInstance.matches(id, pPlayer));
+        this.trigger(serverPlayer, (triggerInstance) -> triggerInstance.matches(id, pPlayer));
     }
 
     @Override
