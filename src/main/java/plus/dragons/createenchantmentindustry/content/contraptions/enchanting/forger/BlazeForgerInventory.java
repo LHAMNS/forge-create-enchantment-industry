@@ -573,19 +573,11 @@ public class BlazeForgerInventory extends ItemStackHandler {
     }
 
     /**
-     * Writes enchantments to the correct NBT tag based on item type.
-     * Enchanted books use "StoredEnchantments", all other items use "Enchantments".
+     * Delegates to the shared {@link Enchanting#setAllEnchantments(Map, ItemStack)} utility
+     * which correctly writes to "StoredEnchantments" for enchanted books.
      */
     private static void setEnchantmentsCorrectly(Map<Enchantment, Integer> enchantments, ItemStack stack) {
-        EnchantmentHelper.setEnchantments(enchantments, stack);
-        if (stack.is(Items.ENCHANTED_BOOK)) {
-            CompoundTag tag = stack.getOrCreateTag();
-            // setEnchantments writes to "Enchantments"; move to "StoredEnchantments" for books
-            if (tag.contains("Enchantments")) {
-                tag.put("StoredEnchantments", tag.getList("Enchantments", 10).copy());
-                tag.remove("Enchantments");
-            }
-        }
+        Enchanting.setAllEnchantments(enchantments, stack);
     }
 
     protected void applyRepairCost(ItemStack base, ItemStack addition) {

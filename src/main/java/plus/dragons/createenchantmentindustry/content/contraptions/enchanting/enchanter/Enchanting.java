@@ -2,6 +2,7 @@ package plus.dragons.createenchantmentindustry.content.contraptions.enchanting.e
 
 import net.createmod.catnip.data.Pair;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -43,6 +44,28 @@ public class Enchanting {
             if (!stored.isEmpty()) return stored;
         }
         return EnchantmentHelper.getEnchantments(itemStack);
+    }
+
+    /**
+     * Writes enchantments to the correct NBT tag based on item type.
+     * {@link EnchantmentHelper#setEnchantments(Map, ItemStack)} always writes to the
+     * {@code "Enchantments"} tag, but enchanted books must store theirs under
+     * {@code "StoredEnchantments"}. This method writes via {@code setEnchantments} and
+     * then moves the tag for enchanted books so both read and write paths are consistent.
+     */
+    public static void setAllEnchantments(Map<Enchantment, Integer> enchantments, ItemStack stack) {
+        EnchantmentHelper.setEnchantments(enchantments, stack);
+        if (stack.is(Items.ENCHANTED_BOOK)) {
+            CompoundTag tag = stack.getOrCreateTag();
+            if (tag.contains("Enchantments")) {
+                tag.put("StoredEnchantments", tag.getList("Enchantments", 10).copy());
+                tag.remove("Enchantments");
+            } else if (enchantments.isEmpty()) {
+                // setEnchantments with empty map removes the "Enchantments" tag,
+                // but stale "StoredEnchantments" from the original book may remain
+                tag.remove("StoredEnchantments");
+            }
+        }
     }
 
     @Nullable

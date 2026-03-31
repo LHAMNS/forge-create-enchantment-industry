@@ -1,12 +1,13 @@
 package plus.dragons.createenchantmentindustry.content.contraptions.enchanting.grindstone;
 
 import com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipe;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.util.Mth;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
-import net.minecraft.world.item.enchantment.EnchantmentHelper;
+
 import net.minecraft.world.level.Level;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.GrindstoneEvent;
@@ -149,18 +150,24 @@ public class GrindstoneHelper {
                 topEnchantments.merge(enchantment, entry.getValue(), Math::max);
             }
         }
-        EnchantmentHelper.setEnchantments(topEnchantments, top);
+        Enchanting.setAllEnchantments(topEnchantments, top);
     }
 
     public static ItemStack removeNonCursesFrom(ItemStack input) {
         Map<Enchantment, Integer> enchantments = Enchanting.getAllEnchantments(input);
         enchantments.entrySet().removeIf(entry -> !entry.getKey().isCurse());
-        EnchantmentHelper.setEnchantments(enchantments, input);
+        Enchanting.setAllEnchantments(enchantments, input);
 
         if (input.is(Items.ENCHANTED_BOOK) && enchantments.isEmpty()) {
             ItemStack book = new ItemStack(Items.BOOK, input.getCount());
             if (input.hasTag()) {
-                book.setTag(input.getTag().copy());
+                CompoundTag tag = input.getTag().copy();
+                // Remove enchantment tags so the plain book doesn't carry stale data
+                tag.remove("StoredEnchantments");
+                tag.remove("Enchantments");
+                if (!tag.isEmpty()) {
+                    book.setTag(tag);
+                }
             }
             input = book;
         }

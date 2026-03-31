@@ -15,7 +15,7 @@ import net.minecraft.world.level.Level;
 
 /**
  * Renderer for the Blaze Forger block entity.
- * Renders items from inventory slots 0-3 (2 input + 2 output) floating
+ * Renders items from inventory slots 0-5 (inputs, outputs, and preview/result) floating
  * above the block with vertical bobbing and horizontal rotation.
  * <p>
  * Ported from upstream BlazeForgerRenderer, adapted to Forge 1.20.1
@@ -32,7 +32,12 @@ public class BlazeForgerRenderer extends SmartBlockEntityRenderer<BlazeForgerBlo
                               MultiBufferSource bufferSource, int light, int overlay) {
         super.renderSafe(blockEntity, partialTicks, poseStack, bufferSource, light, overlay);
 
-        for (int slot = 0; slot < 4; slot++) {
+        // Render slots 0-3 always (input + output). Additionally render slots 4-5
+        // (preview results from updateResult()) only during active forging so the player
+        // sees the expected 4 items. Once forging completes (processingTime <= 0),
+        // skip 4-5 to avoid stale duplicates left over until the next updateResult().
+        int maxSlot = blockEntity.processingTime > 0 ? 6 : 4;
+        for (int slot = 0; slot < maxSlot; slot++) {
             ItemStack item = blockEntity.inventory.getStackInSlot(slot);
             if (item.isEmpty())
                 continue;
