@@ -22,7 +22,7 @@ public class CeiCreativeModeTab {
     static {
         REGISTER = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, EnchantmentIndustry.ID);
         CREATIVE_TAB = REGISTER.register("base", () -> {
-            return CreativeModeTab.builder().title(Component.literal("CEI"))
+            return CreativeModeTab.builder().title(Component.translatable("itemGroup.create_enchantment_industry.base"))
                     .withTabsBefore(AllCreativeModeTabs.BASE_CREATIVE_TAB.getKey(),AllCreativeModeTabs.PALETTES_CREATIVE_TAB.getKey())
                     .icon(CeiItems.ENCHANTING_GUIDE::asStack)
                     .displayItems((params, output) -> {
