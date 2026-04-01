@@ -111,6 +111,8 @@ dependencies {
     modRuntimeOnly("top.theillusivec4.curios:curios-forge:${curios_version}+${curios_minecraft_version}")
 
     annotationProcessor "org.spongepowered:mixin:${mixin_version}:processor"
+
+    // Local dev mods (placed in run/mods/ directory instead - SRG JARs can't be deobfed inline with ModDevGradle)
 }
 
 sourceSets.main.resources {
@@ -151,7 +153,6 @@ publishMods {
     type = STABLE
     displayName = "CEI ${mod_version} for Create ${minecraft_version}-${create_version}"
     modLoaders.add("forge")
-    modLoaders.add("neoforge")
 
     curseforge {
         projectId = "688768"
