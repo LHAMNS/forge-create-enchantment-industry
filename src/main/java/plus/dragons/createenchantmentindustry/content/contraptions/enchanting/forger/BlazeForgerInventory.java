@@ -115,6 +115,12 @@ public class BlazeForgerInventory extends ItemStackHandler {
         cost = 0;
     }
 
+    /** Clear preview slots 4-5. Called on block destroy to prevent item duplication. */
+    protected void clearPreview() {
+        stacks.set(4, ItemStack.EMPTY);
+        stacks.set(5, ItemStack.EMPTY);
+    }
+
     protected void applyResult() {
         stacks.set(2, stacks.get(4).copy());
         stacks.set(3, stacks.get(5).copy());

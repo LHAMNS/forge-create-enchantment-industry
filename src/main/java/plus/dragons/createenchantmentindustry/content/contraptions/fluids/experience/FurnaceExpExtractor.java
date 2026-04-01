@@ -121,6 +121,13 @@ public class FurnaceExpExtractor implements IFluidHandler{
                 }
             }
         }
+        int fluidAmount = (int) Math.floor(result);
+        // Guard: if the floored result is 0, don't consume any recipe entries.
+        // This prevents phantom drains where recipesUsed is modified but no fluid
+        // is actually produced (e.g. small drain on high-XP-per-item recipes).
+        if (fluidAmount == 0) {
+            return FluidStack.EMPTY;
+        }
         if (action.execute()) {
             recipesUsed.clear();
             for (var e : remaining.object2IntEntrySet()) {
@@ -129,6 +136,6 @@ public class FurnaceExpExtractor implements IFluidHandler{
                 });
             }
         }
-        return new FluidStack(CeiFluids.EXPERIENCE.get(), (int) Math.floor(result));
+        return new FluidStack(CeiFluids.EXPERIENCE.get(), fluidAmount);
     }
 }

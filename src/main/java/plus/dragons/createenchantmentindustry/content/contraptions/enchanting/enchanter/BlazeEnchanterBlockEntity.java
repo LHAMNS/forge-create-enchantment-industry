@@ -593,9 +593,13 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
         FluidStack tankFluid = internalTank.getPrimaryHandler().getFluid();
         if (tankFluid.getAmount() < amount)
             return false;
-        return hyper
-                ? CeiFluids.HYPER_EXPERIENCE.is(tankFluid.getFluid())
-                : CeiFluids.EXPERIENCE.is(tankFluid.getFluid());
+        // In hyper mode, accept either HYPER_EXPERIENCE or normal EXPERIENCE from tank.
+        // Hyper mode can be triggered by superExperience alone while the tank holds
+        // normal XP — refusing normal XP here would cause an infinite processing loop.
+        if (hyper)
+            return CeiFluids.HYPER_EXPERIENCE.is(tankFluid.getFluid())
+                    || CeiFluids.EXPERIENCE.is(tankFluid.getFluid());
+        return CeiFluids.EXPERIENCE.is(tankFluid.getFluid());
     }
 
     /**
@@ -658,8 +662,8 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     }
 
     @Override
-    public void invalidate() {
-        super.invalidate();
+    public void invalidateCaps() {
+        super.invalidateCaps();
         for (LazyOptional<EnchantingItemHandler> lazyOptional : itemHandlers.values())
             lazyOptional.invalidate();
     }
@@ -750,11 +754,19 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
             superExperience -= amount;
             return true;
         }
-        // Fall back to tank
+        // Fall back to tank — try the expected fluid type first
         FluidStack exp = new FluidStack(hyper
                 ? CeiFluids.HYPER_EXPERIENCE.get().getSource()
                 : CeiFluids.EXPERIENCE.get().getSource(), amount);
-        return internalTank.getPrimaryHandler().drain(exp, IFluidHandler.FluidAction.EXECUTE).getAmount() == amount;
+        int drained = internalTank.getPrimaryHandler().drain(exp, IFluidHandler.FluidAction.EXECUTE).getAmount();
+        if (drained == amount) return true;
+        // In hyper mode triggered by superExperience, the tank may hold normal EXPERIENCE.
+        // Try draining normal XP for the remaining amount.
+        if (hyper && drained < amount) {
+            FluidStack fallback = new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), amount - drained);
+            drained += internalTank.getPrimaryHandler().drain(fallback, IFluidHandler.FluidAction.EXECUTE).getAmount();
+        }
+        return drained == amount;
     }
 
     @Override

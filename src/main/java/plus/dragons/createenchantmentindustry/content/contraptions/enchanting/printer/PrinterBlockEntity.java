@@ -279,8 +279,8 @@ public class PrinterBlockEntity extends SmartBlockEntity implements IHaveGoggleI
     }
 
     @Override
-    public void invalidate() {
-        super.invalidate();
+    public void invalidateCaps() {
+        super.invalidateCaps();
         this.itemHandler.invalidate();
     }
 

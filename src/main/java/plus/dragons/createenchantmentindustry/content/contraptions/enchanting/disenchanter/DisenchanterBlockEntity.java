@@ -408,8 +408,8 @@ public class DisenchanterBlockEntity extends SmartBlockEntity implements IHaveGo
     }
 
     @Override
-    public void invalidate() {
-        super.invalidate();
+    public void invalidateCaps() {
+        super.invalidateCaps();
         for (LazyOptional<DisenchanterItemHandler> lazyOptional : itemHandlers.values())
             lazyOptional.invalidate();
     }

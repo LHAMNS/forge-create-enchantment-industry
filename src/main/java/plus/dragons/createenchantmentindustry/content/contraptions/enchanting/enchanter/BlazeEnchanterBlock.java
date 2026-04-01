@@ -141,7 +141,7 @@ public class BlazeEnchanterBlock extends HorizontalDirectionalBlock implements I
                         if (!currentFluid.isEmpty() && !currentFluid.isFluidEqual(targetFluid))
                             return InteractionResult.FAIL;
                         int filled = tank.fill(targetFluid, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.SIMULATE);
-                        if (filled <= 0)
+                        if (filled < targetFluid.getAmount())
                             return InteractionResult.FAIL;
                         tank.fill(targetFluid, net.minecraftforge.fluids.capability.IFluidHandler.FluidAction.EXECUTE);
                         if (!player.getAbilities().instabuild) {

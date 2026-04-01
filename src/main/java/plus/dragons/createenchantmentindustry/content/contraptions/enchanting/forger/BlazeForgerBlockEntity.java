@@ -252,7 +252,7 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
     }
 
     public boolean hyper() {
-        return CeiFluids.HYPER_EXPERIENCE.is(internalTank.getPrimaryHandler().getFluid().getFluid());
+        return superExperience > 0 || CeiFluids.HYPER_EXPERIENCE.is(internalTank.getPrimaryHandler().getFluid().getFluid());
     }
 
     // ── Lightning Strike Logic (matches upstream BlazeExperienceBlockEntity) ──
@@ -315,10 +315,17 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
             superExperience -= amount;
             return;
         }
+        // Fall back to tank — try the expected fluid type first
         FluidStack exp = new FluidStack(
                 hyper() ? CeiFluids.HYPER_EXPERIENCE.get().getSource() : CeiFluids.EXPERIENCE.get().getSource(),
                 amount);
-        internalTank.getPrimaryHandler().drain(exp, IFluidHandler.FluidAction.EXECUTE);
+        int drained = internalTank.getPrimaryHandler().drain(exp, IFluidHandler.FluidAction.EXECUTE).getAmount();
+        // In hyper mode triggered by superExperience, the tank may hold normal EXPERIENCE.
+        // Try draining normal XP for the remaining amount.
+        if (hyper() && drained < amount) {
+            FluidStack fallback = new FluidStack(CeiFluids.EXPERIENCE.get().getSource(), amount - drained);
+            internalTank.getPrimaryHandler().drain(fallback, IFluidHandler.FluidAction.EXECUTE);
+        }
     }
 
     /** Get the internal super experience counter. */
@@ -406,13 +413,16 @@ public class BlazeForgerBlockEntity extends SmartBlockEntity implements IHaveGog
         super.destroy();
         if (level instanceof ServerLevel) {
             var pos = getBlockPos();
-            // Drop inventory contents (all 6 slots including preview slots 4-5)
-            for (int i = 0; i < 6; i++) {
+            // Only drop real slots 0-3 (inputs + outputs), NOT preview slots 4-5.
+            // Preview slots are derived data computed from inputs — dropping them
+            // alongside inputs would duplicate items.
+            for (int i = 0; i < 4; i++) {
                 ItemStack stack = inventory.getStackInSlot(i);
                 if (!stack.isEmpty()) {
                     net.minecraft.world.Containers.dropItemStack(level, pos.getX(), pos.getY(), pos.getZ(), stack);
                 }
             }
+            inventory.clearPreview();
         }
     }
 

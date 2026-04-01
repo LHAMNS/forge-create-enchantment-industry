@@ -127,8 +127,69 @@ public class CeiDataMaps {
         // CEI items
         registerExperienceFuel(CeiBlocks.SUPER_EXPERIENCE_BLOCK.get().asItem(), ExperienceFuelEntry.special(27));
         registerExperienceFuel(CeiItems.SUPER_EXPERIENCE_NUGGET.get(), ExperienceFuelEntry.special(3));
+        // Experience Cake and Slice (matches upstream CEIDataMaps: special fuel)
+        registerExperienceFuel(CeiItems.EXPERIENCE_CAKE.get(), ExperienceFuelEntry.special(1000));
+        registerExperienceFuel(CeiItems.EXPERIENCE_CAKE_SLICE.get(), ExperienceFuelEntry.special(250));
 
-        EnchantmentIndustry.LOGGER.debug("CeiDataMaps: Registered default XP fluids, custom name inks, and experience fuels");
+        // Register per-enchantment super level extensions (matches upstream)
+        // Mending and Infinity are capped at their vanilla max (extension=0) in hyper mode
+        setSuperEnchantingLevelExtension(net.minecraft.world.item.enchantment.Enchantments.MENDING, 0);
+        setSuperEnchantingLevelExtension(net.minecraft.world.item.enchantment.Enchantments.INFINITY_ARROWS, 0);
+
+        // Register compatible XP fluids from other mods (matches upstream CEIDataMaps.generate)
+        registerCompatXpFluids();
+
+        EnchantmentIndustry.LOGGER.debug("CeiDataMaps: Registered default XP fluids, custom name inks, experience fuels, and level extensions");
+    }
+
+    /**
+     * Register XP fluids from known compatible mods (matches upstream CEIDataMaps.generate).
+     * Only registers if the mod is present. Unit = mB per 1 XP point.
+     */
+    private static void registerCompatXpFluids() {
+        var modList = net.minecraftforge.fml.ModList.get();
+        var registry = net.minecraftforge.registries.ForgeRegistries.FLUIDS;
+
+        // cofh_core: Essence of Knowledge — 25 mB per XP
+        if (modList.isLoaded("cofh_core")) {
+            tryRegisterXpFluid(registry, "cofh_core", "experience", 25);
+        }
+        // cyclic: XP Juice — 20 mB per XP
+        if (modList.isLoaded("cyclic")) {
+            tryRegisterXpFluid(registry, "cyclic", "xpjuice", 20);
+        }
+        // enderio: XP Juice — 20 mB per XP
+        if (modList.isLoaded("enderio")) {
+            tryRegisterXpFluid(registry, "enderio", "xp_juice", 20);
+        }
+        // industrialforegoing: Essence — 20 mB per XP
+        if (modList.isLoaded("industrialforegoing")) {
+            tryRegisterXpFluid(registry, "industrialforegoing", "essence", 20);
+        }
+        // mob_grinding_utils: Fluid XP — 20 mB per XP
+        if (modList.isLoaded("mob_grinding_utils")) {
+            tryRegisterXpFluid(registry, "mob_grinding_utils", "fluid_xp", 20);
+        }
+        // pneumaticcraft: Memory Essence — 20 mB per XP
+        if (modList.isLoaded("pneumaticcraft")) {
+            tryRegisterXpFluid(registry, "pneumaticcraft", "memory_essence", 20);
+        }
+        // sophisticatedcore: XP — 20 mB per XP
+        if (modList.isLoaded("sophisticatedcore")) {
+            tryRegisterXpFluid(registry, "sophisticatedcore", "xp_still", 20);
+        }
+    }
+
+    private static void tryRegisterXpFluid(net.minecraftforge.registries.IForgeRegistry<Fluid> registry,
+                                            String modId, String fluidName, int mbPerXp) {
+        var rl = new net.minecraft.resources.ResourceLocation(modId, fluidName);
+        if (registry.containsKey(rl)) {
+            Fluid fluid = registry.getValue(rl);
+            if (fluid != null) {
+                registerXpFluid(fluid, mbPerXp);
+                EnchantmentIndustry.LOGGER.debug("CeiDataMaps: Registered compat XP fluid {}:{} ({}mB/XP)", modId, fluidName, mbPerXp);
+            }
+        }
     }
 
     // ── Public API ──────────────────────────────────────────────────────

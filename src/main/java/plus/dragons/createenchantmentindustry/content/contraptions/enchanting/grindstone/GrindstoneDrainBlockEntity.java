@@ -155,8 +155,8 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
     }
 
     @Override
-    public void invalidate() {
-        super.invalidate();
+    public void invalidateCaps() {
+        super.invalidateCaps();
         itemCapability.invalidate();
     }
 
@@ -394,7 +394,11 @@ public class GrindstoneDrainBlockEntity extends KineticBlockEntity {
         super.destroy();
         if (level != null && !level.isClientSide) {
             Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), processedItem);
-            Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), inventory.extractItem(3000, 64, false));
+            // Extract all output slots — extractItem(3000, ...) returns one slot per call
+            ItemStack extracted;
+            while (!(extracted = inventory.extractItem(3000, 64, false)).isEmpty()) {
+                Containers.dropItemStack(level, worldPosition.getX(), worldPosition.getY(), worldPosition.getZ(), extracted);
+            }
         }
     }
 

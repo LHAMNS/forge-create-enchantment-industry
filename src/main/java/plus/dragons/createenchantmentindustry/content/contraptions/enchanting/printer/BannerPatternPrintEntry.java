@@ -82,8 +82,19 @@ public class BannerPatternPrintEntry implements PrintEntry {
 
     @Override
     public Fluid requiredInkType(ItemStack target) {
-        // Use experience fluid for banner patterns
+        // Default to experience fluid; dye fluids are accepted via acceptsFluid()
         return CeiFluids.EXPERIENCE.get();
+    }
+
+    @Override
+    public boolean acceptsFluid(net.minecraftforge.fluids.FluidStack fluidStack, ItemStack target) {
+        // Accept experience fluid (default) or any dye fluid from forge:dyes tag.
+        // When CDP is installed, its dye fluids populate this tag, enabling
+        // color-specific banner pattern reprinting (matches upstream behavior).
+        if (fluidStack.getFluid().isSame(requiredInkType(target)))
+            return true;
+        return fluidStack.getFluid().is(net.minecraft.tags.FluidTags.create(
+                new ResourceLocation("forge", "dyes")));
     }
 
     @Override
