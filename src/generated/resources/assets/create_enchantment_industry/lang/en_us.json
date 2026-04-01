@@ -190,6 +190,9 @@
 	"create_enchantment_industry.gui.printer.banner_pattern.multiple_pattern": "Multiple patterns - cannot print",
 	"create_enchantment_industry.gui.printer.banner_pattern.no_pattern": "No pattern to print",
 
+	"create.item_attributes.create_enchantment_industry.processable_by_mechanical_grindstone": "can be processed by Mechanical Grindstone",
+	"create.item_attributes.create_enchantment_industry.processable_by_mechanical_grindstone.inverted": "cannot be processed by Mechanical Grindstone",
+
 	"create_enchantment_industry.generic.unit.page": "Page",
 	"create_enchantment_industry.generic.unit.pages": "Pages",
 

@@ -195,6 +195,9 @@
 	"create_enchantment_industry.gui.printer.banner_pattern.multiple_pattern": "多个图案——无法打印",
 	"create_enchantment_industry.gui.printer.banner_pattern.no_pattern": "无可打印的图案",
 
+	"create.item_attributes.create_enchantment_industry.processable_by_mechanical_grindstone": "可被机械砂轮加工",
+	"create.item_attributes.create_enchantment_industry.processable_by_mechanical_grindstone.inverted": "不可被机械砂轮加工",
+
 	"create_enchantment_industry.gui.goggles.enchanting.completed": "附魔完成！",
 	"create_enchantment_industry.gui.goggles.enchanting.cost": "附魔消耗：%1$s",
 	"create_enchantment_industry.gui.goggles.enchanting.invalid_item": "附魔物品无效！",
