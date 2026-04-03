@@ -25,7 +25,7 @@ public class CrushingWheelControllerBlockEntityMixin {
     public Entity processingEntity;
 
     @Inject(method = "tick", remap = false,
-            at = @At(value = "INVOKE", remap = true, target = "Lnet/minecraft/world/entity/Entity;setPos(DDD)V", shift = At.Shift.AFTER))
+            at = @At(value = "INVOKE", remap = true, target = "Lnet/minecraft/world/entity/Entity;hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z", shift = At.Shift.AFTER))
     private void injected(CallbackInfo ci) {
         if(processingEntity.level().isClientSide) return;
         if(!processingEntity.isAlive() && processingEntity instanceof LivingEntity livingEntity){

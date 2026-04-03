@@ -28,7 +28,7 @@ public class DeployerFakePlayerMixin {
         ItemStack deployerTool = player.getInventory().getItem(0);
         int xp = event.getDroppedExperience();
 
-        if(MendingByDeployer.canItemBeMended(deployerTool)) {
+        if(CeiConfigs.SERVER.deployerMendItem.get() && MendingByDeployer.canItemBeMended(deployerTool)) {
                 int remainingXp = MendingByDeployer.getNewXp(xp, deployerTool);
                 player.getInventory().setItem(0, MendingByDeployer.mendItem(xp, deployerTool));
                 xp = remainingXp;

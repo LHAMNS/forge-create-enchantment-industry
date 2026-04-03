@@ -11,7 +11,9 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Overwrite;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.ExperienceHelper;
 
 import javax.annotation.ParametersAreNonnullByDefault;
@@ -22,14 +24,10 @@ public abstract class SpoutBlockMixin extends Block implements IWrenchable, IBE<
     public SpoutBlockMixin(Properties pProperties) {
         super(pProperties);
     }
-    
-    /**
-     * @author CEI
-     * @reason Drop experience fluid as XP orbs when spout is broken
-     */
+
     @SuppressWarnings("deprecation")
-    @Overwrite(remap = true)
-    public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
+    @Inject(method = "onRemove", at = @At("HEAD"), remap = true)
+    private void createEnchantmentIndustry$dropExperienceFluid(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving, CallbackInfo ci) {
         if (!state.hasBlockEntity() || state.getBlock() == newState.getBlock())
             return;
         if (level instanceof ServerLevel serverLevel) {
@@ -38,6 +36,5 @@ public abstract class SpoutBlockMixin extends Block implements IWrenchable, IBE<
                 ExperienceHelper.dropExperienceFluid(serverLevel, VecHelper.getCenterOf(pos), fluidStack);
             });
         }
-        level.removeBlockEntity(pos);
     }
 }

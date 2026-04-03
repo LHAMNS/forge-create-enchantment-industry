@@ -833,7 +833,7 @@ public class BlazeEnchanterBlockEntity extends SmartBlockEntity implements IHave
     @Override
     public boolean addToGoggleTooltip(List<Component> tooltip, boolean isPlayerSneaking) {
         LANG.translate("gui.goggles.blaze_enchanter").forGoggles(tooltip);
-        if (targetItem != null && targetItem.is(CeiItems.ENCHANTING_GUIDE.get())) {
+        if (targetItem != null && targetItem.is(CeiItems.ENCHANTING_GUIDE.get()) && !enchanterBehaviour.isUsingTemplateMode()) {
             EnchantmentEntry entry = Enchanting.getTargetEnchantment(targetItem, hyper());
             if (entry != null) {
                 tooltip.add(Component.literal("     ")

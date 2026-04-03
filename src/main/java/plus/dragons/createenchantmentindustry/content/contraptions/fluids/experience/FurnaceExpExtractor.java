@@ -14,6 +14,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
+import plus.dragons.createenchantmentindustry.foundation.mixin.FurnaceXpRemainderAccessor;
 
 public class FurnaceExpExtractor implements IFluidHandler{
     final Object2IntOpenHashMap<ResourceLocation> recipesUsed;
@@ -22,6 +23,19 @@ public class FurnaceExpExtractor implements IFluidHandler{
     public FurnaceExpExtractor(Object2IntOpenHashMap<ResourceLocation> recipesUsed, AbstractFurnaceBlockEntity BE) {
         this.recipesUsed = recipesUsed;
         this.BE = BE;
+    }
+
+    private double getRemainder() {
+        if (BE instanceof FurnaceXpRemainderAccessor accessor) {
+            return accessor.cei$getXpRemainder();
+        }
+        return 0.0;
+    }
+
+    private void setRemainder(double remainder) {
+        if (BE instanceof FurnaceXpRemainderAccessor accessor) {
+            accessor.cei$setXpRemainder(remainder);
+        }
     }
 
     int getTotalExp() {
@@ -40,6 +54,7 @@ public class FurnaceExpExtractor implements IFluidHandler{
                         result.addAndGet(cookingRecipe.getExperience() * entry.getIntValue());
             });
         }
+        result.addAndGet(getRemainder());
         return (int) Math.floor(result.doubleValue());
     }
 
@@ -89,17 +104,39 @@ public class FurnaceExpExtractor implements IFluidHandler{
             return FluidStack.EMPTY;
         }
         RecipeManager recipeManager = level.getRecipeManager();
-        var total = getTotalExp(level);
+
+        // Compute exact available XP including remainder
+        double remainder = getRemainder();
+        double exactTotal = remainder;
+        for (var entry : recipesUsed.object2IntEntrySet()) {
+            var recipeOpt = recipeManager.byKey(entry.getKey());
+            if (recipeOpt.isEmpty()) continue;
+            if (!(recipeOpt.get() instanceof AbstractCookingRecipe cookingRecipe)) continue;
+            exactTotal += cookingRecipe.getExperience() * entry.getIntValue();
+        }
+
+        int total = (int) Math.floor(exactTotal);
         if (total == 0) {
             return FluidStack.EMPTY;
-        } else if (maxDrain >= total) {
-            if (action.execute()) recipesUsed.clear();
-            return new FluidStack(CeiFluids.EXPERIENCE.get(), total);
         }
-        // Efficient mathematical approach: iterate entries directly with counts
-        double result = 0;
+
+        if (maxDrain >= total) {
+            // Full drain
+            int fluidAmount = total;
+            if (action.execute()) {
+                double newRemainder = exactTotal - fluidAmount;
+                recipesUsed.clear();
+                setRemainder(newRemainder);
+            }
+            return new FluidStack(CeiFluids.EXPERIENCE.get(), fluidAmount);
+        }
+
+        // Partial drain: consume recipe entries up to maxDrain
+        double consumed = 0;
         Object2IntOpenHashMap<ResourceLocation> remaining = new Object2IntOpenHashMap<>();
         boolean budgetExhausted = false;
+        double exactConsumedFromRecipes = 0;
+
         for (var entry : recipesUsed.object2IntEntrySet()) {
             var recipeOpt = recipeManager.byKey(entry.getKey());
             if (recipeOpt.isEmpty()) continue;
@@ -112,8 +149,10 @@ public class FurnaceExpExtractor implements IFluidHandler{
                 // Zero-XP recipes: skip but preserve
                 remaining.put(entry.getKey(), count);
             } else {
-                int canDrain = (int) Math.min(count, Math.floor((maxDrain - result) / expPerItem));
-                result += canDrain * expPerItem;
+                // Include remainder in the budget for consuming
+                int canDrain = (int) Math.min(count, Math.floor((maxDrain - consumed) / expPerItem));
+                consumed += canDrain * expPerItem;
+                exactConsumedFromRecipes += canDrain * expPerItem;
                 int leftover = count - canDrain;
                 if (leftover > 0) {
                     remaining.put(entry.getKey(), leftover);
@@ -121,20 +160,26 @@ public class FurnaceExpExtractor implements IFluidHandler{
                 }
             }
         }
-        int fluidAmount = (int) Math.floor(result);
+
+        // The fluid amount we return is the floored total consumed (recipes + old remainder)
+        // but capped to maxDrain
+        double exactAvailableFromConsumed = exactConsumedFromRecipes + remainder;
+        int fluidAmount = (int) Math.min(maxDrain, Math.floor(exactAvailableFromConsumed));
+
         // Guard: if the floored result is 0, don't consume any recipe entries.
-        // This prevents phantom drains where recipesUsed is modified but no fluid
-        // is actually produced (e.g. small drain on high-XP-per-item recipes).
         if (fluidAmount == 0) {
             return FluidStack.EMPTY;
         }
+
         if (action.execute()) {
+            double newRemainder = exactAvailableFromConsumed - fluidAmount;
             recipesUsed.clear();
             for (var e : remaining.object2IntEntrySet()) {
                 recipeManager.byKey(e.getKey()).ifPresent(r -> {
                     for (int i = 0; i < e.getIntValue(); i++) BE.setRecipeUsed(r);
                 });
             }
+            setRemainder(newRemainder);
         }
         return new FluidStack(CeiFluids.EXPERIENCE.get(), fluidAmount);
     }
