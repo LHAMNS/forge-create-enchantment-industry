@@ -14,7 +14,7 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import plus.dragons.createenchantmentindustry.entry.CeiDataMaps;
 import plus.dragons.createenchantmentindustry.entry.CeiFluids;
-import plus.dragons.createenchantmentindustry.foundation.mixin.FurnaceXpRemainderAccessor;
+import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.FurnaceXpRemainderAccessor;
 
 public class FurnaceExpExtractor implements IFluidHandler{
     final Object2IntOpenHashMap<ResourceLocation> recipesUsed;

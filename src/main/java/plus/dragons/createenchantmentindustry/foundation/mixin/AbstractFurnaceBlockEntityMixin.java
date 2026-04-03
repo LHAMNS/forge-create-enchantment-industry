@@ -27,6 +27,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.FurnaceExpExtractor;
+import plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience.FurnaceXpRemainderAccessor;
 
 @Mixin(AbstractFurnaceBlockEntity.class)
 @Implements(@Interface(iface = FurnaceXpRemainderAccessor.class, prefix = "createEnchantmentIndustry$"))

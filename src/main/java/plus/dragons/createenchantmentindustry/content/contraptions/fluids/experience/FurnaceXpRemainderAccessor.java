@@ -1,4 +1,4 @@
-package plus.dragons.createenchantmentindustry.foundation.mixin;
+package plus.dragons.createenchantmentindustry.content.contraptions.fluids.experience;
 
 /**
  * Interface for accessing XP remainder tracking on furnace block entities.
