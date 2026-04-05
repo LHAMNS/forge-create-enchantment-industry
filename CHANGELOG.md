@@ -1,5 +1,19 @@
 # Changelog — Create: Enchantment Industry (Forge 1.20.1 Port)
 
+---
+
+## [1.3.6-fix1] - 2026-04-05
+
+### Fixed
+- **[FATAL] AbstractFurnaceBlockEntityMixin `@Implements` prefix collision**: The `@Implements(@Interface(prefix = "createEnchantmentIndustry$"))` annotation caused Mixin to treat ALL methods starting with `createEnchantmentIndustry$` as interface implementations — including 5 `@Inject` handlers and 1 `@Unique` helper. This resulted in FATAL `InvalidMixinException` at startup ("`getCapability` does not exist in target interface `FurnaceXpRemainderAccessor`"). Fixed by renaming `@Inject` methods to `cei$` prefix and `@Unique` fields/methods to `cei_` prefix, preserving only the two actual interface methods (`cei$getXpRemainder`, `cei$setXpRemainder`) with the `createEnchantmentIndustry$` prefix.
+
+### Added
+- `CeiRegistryIntegrationTest`: 9 GameTests verifying all 9 blocks, 9 items, Experience/HyperExperience/Ink fluid registration, XP conversion ratios (1:1 and 10:1), 3 recipe types, PrintEntry registry completeness, and ExperienceFluid xpRatio values
+
+---
+
+## [1.3.6] - Previous Release
+
 > Audit period: 2026-03-29 to 2026-03-31
 > Scope: 16 commits, ~70 files modified, 4 files deleted, ~45 files created
 > Audited by: Gemini 2.5, 6x Claude Opus agents, ChatGPT o4 Pro, manual review
