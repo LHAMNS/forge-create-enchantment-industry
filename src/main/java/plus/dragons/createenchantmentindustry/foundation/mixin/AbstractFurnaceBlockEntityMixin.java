@@ -41,50 +41,52 @@ abstract public class AbstractFurnaceBlockEntityMixin<T> extends BaseContainerBl
     private Object2IntOpenHashMap<ResourceLocation> recipesUsed;
 
     @Unique
-    LazyOptional<IFluidHandler> createEnchantmentIndustry$expExtractor = LazyOptional.of(this::createEnchantmentIndustry$createExpExtractor);
+    LazyOptional<IFluidHandler> cei_expExtractor = LazyOptional.of(this::cei_createExpExtractor);
 
     @Unique
-    private double createEnchantmentIndustry$xpRemainder = 0.0;
+    private double cei_xpRemainder = 0.0;
 
     @Unique
-    private IFluidHandler createEnchantmentIndustry$createExpExtractor(){
+    private IFluidHandler cei_createExpExtractor(){
         return new FurnaceExpExtractor(recipesUsed,(AbstractFurnaceBlockEntity)(Object)this);
     }
 
     @Inject(method = "getCapability", at = @At("HEAD"), cancellable = true, remap = false)
-    private void createEnchantmentIndustry$getCapability(Capability<T> capability, Direction facing, CallbackInfoReturnable<LazyOptional<T>> cir) {
+    private void cei$getCapability(Capability<T> capability, Direction facing, CallbackInfoReturnable<LazyOptional<T>> cir) {
         if (!this.remove && facing != null && capability == ForgeCapabilities.FLUID_HANDLER) {
-            cir.setReturnValue(createEnchantmentIndustry$expExtractor.cast());
+            cir.setReturnValue(cei_expExtractor.cast());
         }
     }
 
     @Inject(method = "invalidateCaps", at = @At("HEAD"), remap = false)
-    private void createEnchantmentIndustry$invalidateCaps(CallbackInfo ci) {
-        createEnchantmentIndustry$expExtractor.invalidate();
+    private void cei$invalidateCaps(CallbackInfo ci) {
+        cei_expExtractor.invalidate();
     }
 
     @Inject(method = "reviveCaps", at = @At("HEAD"), remap = false)
-    private void createEnchantmentIndustry$reviveCaps(CallbackInfo ci) {
-        this.createEnchantmentIndustry$expExtractor = LazyOptional.of(this::createEnchantmentIndustry$createExpExtractor);
+    private void cei$reviveCaps(CallbackInfo ci) {
+        this.cei_expExtractor = LazyOptional.of(this::cei_createExpExtractor);
     }
 
     @Inject(method = "saveAdditional", at = @At("TAIL"))
-    private void createEnchantmentIndustry$saveAdditional(CompoundTag tag, CallbackInfo ci) {
-        if (createEnchantmentIndustry$xpRemainder != 0.0) {
-            tag.putDouble("cei$XpRemainder", createEnchantmentIndustry$xpRemainder);
+    private void cei$saveAdditional(CompoundTag tag, CallbackInfo ci) {
+        if (cei_xpRemainder != 0.0) {
+            tag.putDouble("cei$XpRemainder", cei_xpRemainder);
         }
     }
 
     @Inject(method = "load", at = @At("TAIL"))
-    private void createEnchantmentIndustry$load(CompoundTag tag, CallbackInfo ci) {
-        createEnchantmentIndustry$xpRemainder = tag.getDouble("cei$XpRemainder");
+    private void cei$load(CompoundTag tag, CallbackInfo ci) {
+        cei_xpRemainder = tag.getDouble("cei$XpRemainder");
     }
 
+    // --- @Implements methods: prefix "createEnchantmentIndustry$" maps to FurnaceXpRemainderAccessor ---
+
     public double createEnchantmentIndustry$cei$getXpRemainder() {
-        return createEnchantmentIndustry$xpRemainder;
+        return cei_xpRemainder;
     }
 
     public void createEnchantmentIndustry$cei$setXpRemainder(double remainder) {
-        createEnchantmentIndustry$xpRemainder = remainder;
+        cei_xpRemainder = remainder;
     }
 }
